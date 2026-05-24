@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>학교 단어시험용 사이트</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
@@ -22,7 +22,9 @@
             display: flex; justify-content: center; align-items: center; min-height: 100vh;
         }
 
-        .dashboard { width: 1000px; max-width: 95%; display: grid; grid-template-columns: 340px 1fr; gap: 30px; }
+        .dashboard { width: 1000px; max-width: 95%; display: grid; grid-template-columns: 340px 1fr; gap: 30px; margin: 30px 0; }
+        
+        /* 사이드바 */
         .sidebar { background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 15px; }
         .sidebar h1 { font-size: 22px; font-weight: 600; margin: 0; margin-bottom: 5px; color: var(--primary); border-left: 4px solid var(--accent); padding-left: 15px; }
         
@@ -38,17 +40,22 @@
         .reset-btn { background: #f1f5f9; color: var(--text-light); border: none; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
         .reset-btn:hover { background: #e2e8f0; color: var(--danger); }
         
+        /* 버튼 그룹화 (모바일 그리드를 위해 추가) */
+        .mode-buttons { display: flex; flex-direction: column; gap: 10px; }
+        .action-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
+
         .mode-btn { background: #edf2f7; border: none; padding: 14px 15px; border-radius: 10px; text-align: left; cursor: pointer; font-size: 15px; color: var(--text-main); transition: 0.2s; display: flex; align-items: center; gap: 10px; font-weight: 500; }
         .mode-btn:hover, .mode-btn.active { background: var(--primary); color: white; }
         #btn-retest.active { background: var(--danger); color: white; }
         #btn-retest:hover:not(.active) { background: var(--danger-bg); color: var(--danger); }
-        
         .badge { margin-left: auto; background: var(--danger); color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: bold; }
-        .action-btn { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: auto; transition: 0.2s; }
+        
+        .action-btn { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; }
         .action-btn:hover { background: #2c9a94; }
-        .note-btn { background: #475569; margin-top: 10px; }
+        .note-btn { background: #475569; }
         .note-btn:hover { background: #334155; }
         
+        /* 메인 스테이지 (퀴즈 화면) */
         .main-stage { background: var(--card-bg); border-radius: 20px; padding: 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; display: flex; flex-direction: column; justify-content: center; min-height: 450px; position: relative; }
         #question-display { font-size: 44px; font-weight: 700; margin-bottom: 15px; color: var(--primary); word-break: keep-all; }
         #answer-reveal { font-size: 22px; color: var(--danger); height: 35px; margin-bottom: 30px; opacity: 0; transition: opacity 0.3s; font-weight: 600; }
@@ -60,7 +67,7 @@
         .btn-check { background: var(--primary); color: white; border: none; padding: 0 30px; border-radius: 10px; cursor: pointer; font-weight: 600; }
         .hint-text { margin-top: 25px; color: var(--text-light); cursor: pointer; text-decoration: underline; font-size: 14px; }
         
-        .toast-container { position: fixed; top: 30px; left: 50%; transform: translateX(-50%) translateY(-20px); padding: 15px 30px; border-radius: 12px; color: white; font-weight: 600; font-size: 16px; box-shadow: 0 5px 15px rgba(0,0,0,0.15); opacity: 0; pointer-events: none; transition: transform 0.3s, opacity 0.3s; z-index: 2000; display: flex; align-items: center; gap: 10px; text-align: center; }
+        .toast-container { position: fixed; top: 30px; left: 50%; transform: translateX(-50%) translateY(-20px); padding: 15px 30px; border-radius: 12px; color: white; font-weight: 600; font-size: 16px; box-shadow: 0 5px 15px rgba(0,0,0,0.15); opacity: 0; pointer-events: none; transition: transform 0.3s, opacity 0.3s; z-index: 2000; display: flex; align-items: center; gap: 10px; text-align: center; width: auto; white-space: nowrap; }
         .toast-container.show { opacity: 1; transform: translateX(-50%) translateY(0); }
         .toast-success { background: var(--success); }
         .toast-error { background: var(--danger); }
@@ -73,6 +80,39 @@
         th { background: #f8fafc; padding: 15px; position: sticky; top: 0; color: var(--primary); }
         td { padding: 12px 15px; border-bottom: 1px solid #edf2f7; }
         .close-modal { cursor: pointer; font-size: 24px; color: var(--text-light); }
+
+        /* ========================================================
+           📱 모바일 최적화 (반응형 미디어 쿼리)
+        ======================================================== */
+        @media (max-width: 768px) {
+            body { align-items: flex-start; }
+            .dashboard { grid-template-columns: 1fr; gap: 15px; margin: 15px 0; }
+            
+            .sidebar { padding: 20px; gap: 12px; }
+            .sidebar h1 { font-size: 20px; }
+            .status-box { padding: 12px 5px; }
+            .status-item .num { font-size: 16px; }
+            
+            /* 모바일에서 버튼들을 2단으로 접어 공간 확보 */
+            .mode-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+            .mode-btn { font-size: 13px; padding: 12px 8px; justify-content: center; text-align: center; gap: 6px; }
+            
+            .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
+            .action-btn { font-size: 13px; padding: 12px 8px; }
+
+            .main-stage { padding: 30px 20px; min-height: 350px; }
+            #question-display { font-size: 32px; margin-bottom: 10px; }
+            #answer-reveal { font-size: 18px; margin-bottom: 20px; }
+            
+            /* 입력창과 버튼 위아래로 분리 */
+            .quiz-input-group { flex-direction: column; gap: 10px; }
+            input[type="text"] { padding: 15px; font-size: 16px; text-align: center; }
+            .btn-check { padding: 15px; width: 100%; border-radius: 10px; }
+            
+            .toast-container { width: 90%; font-size: 14px; padding: 12px; white-space: normal; }
+            .modal-content { width: 95%; max-height: 90vh; padding: 20px; }
+            th, td { padding: 10px; font-size: 14px; }
+        }
     </style>
 </head>
 <body>
@@ -88,43 +128,51 @@
             </div>
             <div class="total-info">전체 단어 수: <span id="total-count">320</span>개</div>
             <button class="reset-btn" onclick="resetProgress()"><i class="fa-solid fa-rotate-right"></i> 전체 초기화 (오답 노트 포함)</button>
-            <button class="mode-btn active" id="btn-mixed" onclick="setMode('mixed', this)"><i class="fa-solid fa-shuffle"></i> 섞어서 암기</button>
-            <button class="mode-btn" id="btn-ko" onclick="setMode('ko', this)"><i class="fa-solid fa-language"></i> 한국어 맞추기</button>
-            <button class="mode-btn" id="btn-en" onclick="setMode('en', this)"><i class="fa-solid fa-spell-check"></i> 영어 맞추기</button>
-            <button class="mode-btn" id="btn-retest" onclick="setMode('retest', this)"><i class="fa-solid fa-fire"></i> 오답 다시 풀기 <span class="badge" id="retest-badge">0</span></button>
-            <button class="action-btn note-btn" onclick="openNoteModal()"><i class="fa-solid fa-book-open"></i> 오답 노트 리스트 보기</button>
-            <button class="action-btn" onclick="openAllModal()"><i class="fa-solid fa-list"></i> 전체 단어 / 검색</button>
+            
+            <div class="mode-buttons">
+                <button class="mode-btn active" id="btn-mixed" onclick="setMode('mixed', this)"><i class="fa-solid fa-shuffle"></i> 섞어서 암기</button>
+                <button class="mode-btn" id="btn-ko" onclick="setMode('ko', this)"><i class="fa-solid fa-language"></i> 한국어 맞추기</button>
+                <button class="mode-btn" id="btn-en" onclick="setMode('en', this)"><i class="fa-solid fa-spell-check"></i> 영어 맞추기</button>
+                <button class="mode-btn" id="btn-retest" onclick="setMode('retest', this)"><i class="fa-solid fa-fire"></i> 오답 다시 풀기 <span class="badge" id="retest-badge">0</span></button>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn note-btn" onclick="openNoteModal()"><i class="fa-solid fa-book-open"></i> 오답 노트 리스트 보기</button>
+                <button class="action-btn" onclick="openAllModal()"><i class="fa-solid fa-list"></i> 검색</button>
+            </div>
         </div>
+
         <div class="main-stage">
             <div id="question-display">로딩 중...</div>
             <div id="answer-reveal"></div>
             <div class="quiz-input-group">
-                <input type="text" id="user-answer" placeholder="정답을 입력하세요..." autocomplete="off" onkeypress="handleKey(event)">
+                <input type="text" id="user-answer" placeholder="정답을 입력하세요" 
+                       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" 
+                       onkeypress="handleKey(event)">
                 <button class="btn-check" onclick="checkAnswer()">확인</button>
             </div>
-            <p class="hint-text" id="hint-btn" onclick="showAnswer()">정답이 기억나지 않나요? (오답 처리 후 넘어가기)</p>
-            <button id="next-btn" style="margin-top:20px; display:none; max-width: 200px; align-self: center;" class="action-btn" onclick="fetchWord()">다음 단어 ➔</button>
+            <p class="hint-text" id="hint-btn" onclick="showAnswer()">정답이 기억나지 않나요? (오답 처리)</p>
+            <button id="next-btn" style="margin-top:20px; display:none; width: 100%; max-width: 200px; align-self: center;" class="action-btn" onclick="fetchWord()">다음 단어 ➔</button>
         </div>
     </div>
 
     <div class="modal-overlay" id="all-modal">
         <div class="modal-content">
-            <div class="modal-header"><h2 style="margin:0">전체 단어 목록</h2><span class="close-modal" onclick="closeModal('all-modal')">&times;</span></div>
-            <input type="text" id="search-input" placeholder="검색어 입력..." style="width: 100%; margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 10px;" onkeyup="filterWords()">
-            <div class="table-container"><table><thead><tr><th>번호</th><th>영단어</th><th>뜻</th></tr></thead><tbody id="word-list-body"></tbody></table></div>
+            <div class="modal-header"><h2 style="margin:0; font-size: 18px;">전체 단어 목록</h2><span class="close-modal" onclick="closeModal('all-modal')">&times;</span></div>
+            <input type="text" id="search-input" placeholder="검색어 입력..." style="width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box;" onkeyup="filterWords()">
+            <div class="table-container"><table><thead><tr><th>No</th><th>영단어</th><th>뜻</th></tr></thead><tbody id="word-list-body"></tbody></table></div>
         </div>
     </div>
 
     <div class="modal-overlay" id="note-modal">
         <div class="modal-content">
-            <div class="modal-header"><h2 style="margin:0; color: var(--danger);"><i class="fa-solid fa-book-open"></i> 오답 노트</h2><span class="close-modal" onclick="closeModal('note-modal')">&times;</span></div>
-            <p style="color: var(--text-light); margin-top: 0;">현재까지 누적된 오답입니다. '오답 다시 풀기' 모드에서 맞추면 지워집니다.</p>
-            <div class="table-container"><table><thead><tr><th>번호</th><th>영단어</th><th>뜻</th></tr></thead><tbody id="note-list-body"></tbody></table></div>
+            <div class="modal-header"><h2 style="margin:0; font-size: 18px; color: var(--danger);"><i class="fa-solid fa-book-open"></i> 오답 노트</h2><span class="close-modal" onclick="closeModal('note-modal')">&times;</span></div>
+            <p style="color: var(--text-light); margin-top: 0; font-size: 13px;">현재 누적된 오답입니다. 복습 모드에서 맞추면 지워집니다.</p>
+            <div class="table-container"><table><thead><tr><th>No</th><th>영단어</th><th>뜻</th></tr></thead><tbody id="note-list-body"></tbody></table></div>
         </div>
     </div>
 
     <script>
-        // 파이썬/엑셀 역할을 대신하는 320개 단어 데이터베이스 (JS 객체 배열)
         const vocabData = [
             {id: 1, en: "universality", ko: "보편성"}, {id: 2, en: "affect", ko: "정서"}, {id: 3, en: "variable", ko: "변수"}, {id: 4, en: "finite", ko: "유한한"},
             {id: 5, en: "repertoire", ko: "목록, 레퍼토리, 수행 목록"}, {id: 6, en: "formulation", ko: "체계적 정리, 체계화"}, {id: 7, en: "separable", ko: "분리될 수 있는"}, {id: 8, en: "recognizable", ko: "인식할 수 있는"},
@@ -208,9 +256,7 @@
             {id: 317, en: "degraded", ko: "훼손된, 퇴화한"}, {id: 318, en: "dim", ko: "희미한, 흐릿한"}, {id: 319, en: "fiction", ko: "허구"}, {id: 320, en: "distortion", ko: "왜곡"}
         ];
 
-        let currentMode = 'mixed';
-        let currentWordData = null; 
-        let incorrectWords = [];
+        let currentMode = 'mixed'; let currentWordData = null; let incorrectWords = [];
         let correctCount = 0; let wrongCount = 0; let hasSeenAnswer = false;
 
         window.onload = () => {
@@ -230,7 +276,6 @@
             document.getElementById('solved-count').innerText = correctCount + wrongCount;
             document.getElementById('correct-count').innerText = correctCount;
             document.getElementById('wrong-count').innerText = wrongCount;
-            
             const badge = document.getElementById('retest-badge');
             badge.innerText = incorrectWords.length;
             badge.style.background = incorrectWords.length > 0 ? 'var(--danger)' : 'var(--text-light)';
@@ -241,8 +286,7 @@
                 showNotification("초기화할 데이터가 없습니다.", "error"); return;
             }
             if (confirm("정말 학습 카운트와 오답 노트를 모두 완전히 초기화하시겠습니까?")) {
-                correctCount = 0; wrongCount = 0; incorrectWords = []; 
-                updateScoreboard();
+                correctCount = 0; wrongCount = 0; incorrectWords = []; updateScoreboard();
                 if(currentMode === 'retest') document.getElementById('btn-mixed').click();
                 else fetchWord();
                 showNotification("모든 기록이 깔끔하게 초기화되었습니다.");
@@ -257,48 +301,39 @@
             if ((correctCount + wrongCount) > 0) {
                 if (!confirm("경고: 모드를 변경하면 현재 [학습 카운트]가 0으로 초기화됩니다.\n(※ 오답 노트는 유지됨)\n변경하시겠습니까?")) return;
             }
-
             currentMode = mode; correctCount = 0; wrongCount = 0; updateScoreboard();
             document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            fetchWord();
+            btn.classList.add('active'); fetchWord();
         }
 
         function displayQuestionUI(data) {
             currentWordData = data;
             document.getElementById('question-display').innerText = data.question;
             hasSeenAnswer = false;
-            
             const reveal = document.getElementById('answer-reveal');
             reveal.innerText = ''; reveal.classList.remove('show');
             document.getElementById('user-answer').value = '';
             document.getElementById('next-btn').style.display = 'none';
-            document.getElementById('user-answer').focus();
+            // 모바일에서 입력창 자동 포커싱은 키보드를 억지로 올려 화면을 가릴 수 있으므로 뺌
+            if(window.innerWidth > 768) {
+                document.getElementById('user-answer').focus();
+            }
         }
 
-        // 클라이언트 단에서 랜덤으로 단어 추출하는 로직 (서버 대체)
         function fetchWord() {
             let pool = currentMode === 'retest' ? incorrectWords : vocabData;
-
             if (currentMode === 'retest' && pool.length === 0) {
-                showNotification("축하합니다! 오답 문제를 모두 맞췄습니다. 일반 모드로 돌아갑니다.", "success");
-                document.getElementById('btn-mixed').click();
-                return;
+                showNotification("축하합니다! 오답 문제를 모두 맞췄습니다.", "success");
+                document.getElementById('btn-mixed').click(); return;
             }
-
             const randomIndex = Math.floor(Math.random() * pool.length);
             const word = pool[randomIndex];
-
-            let q, a;
-            let isEnToKo;
-
+            let q, a; let isEnToKo;
             if (currentMode === 'ko') isEnToKo = true;
             else if (currentMode === 'en') isEnToKo = false;
             else isEnToKo = Math.random() > 0.5;
 
-            if (isEnToKo) { q = word.en; a = word.ko; } 
-            else { q = word.ko; a = word.en; }
-
+            if (isEnToKo) { q = word.en; a = word.ko; } else { q = word.ko; a = word.en; }
             displayQuestionUI({ id: word.id, en: word.en, ko: word.ko, question: q, answer: a });
         }
 
@@ -306,17 +341,14 @@
             wrongCount++;
             if (!incorrectWords.find(w => w.id === currentWordData.id)) incorrectWords.push(currentWordData);
             updateScoreboard();
-            
             if (userInput !== null) showNotification(`❌ 오답입니다!<br>정답은 [ ${currentWordData.answer} ] 입니다.`, "error");
             else showNotification(`💡 정답은 [ ${currentWordData.answer} ] 입니다.`, "error");
-            
             fetchWord();
         }
 
         function checkAnswer() {
             const userInput = document.getElementById('user-answer').value.trim().toLowerCase();
             if (userInput === "") return;
-
             const cleanCorrectAnswer = currentWordData.answer.toLowerCase();
             const acceptableAnswers = currentWordData.answer.split(',').map(str => str.trim().toLowerCase());
             const isCorrect = (userInput === cleanCorrectAnswer) || acceptableAnswers.includes(userInput);
@@ -326,14 +358,9 @@
                 if (currentMode === 'retest') {
                     incorrectWords = incorrectWords.filter(w => w.id !== currentWordData.id);
                     showNotification("✅ 완벽합니다! 오답 노트에서 제거되었습니다.", "success");
-                } else {
-                    showNotification("✅ 정답입니다!", "success");
-                }
-                updateScoreboard();
-                fetchWord();
-            } else {
-                handleWrongAnswer(userInput);
-            }
+                } else { showNotification("✅ 정답입니다!", "success"); }
+                updateScoreboard(); fetchWord();
+            } else { handleWrongAnswer(userInput); }
         }
 
         function handleKey(e) { if (e.key === 'Enter') checkAnswer(); }
@@ -342,8 +369,7 @@
         function renderTable(tbodyId, data) {
             const body = document.getElementById(tbodyId);
             if (data.length === 0) {
-                body.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 30px; color:#999;">데이터가 없습니다.</td></tr>`;
-                return;
+                body.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 30px; color:#999;">데이터가 없습니다.</td></tr>`; return;
             }
             body.innerHTML = data.map(w => `<tr><td>${w.id}</td><td style="font-weight:600; color:#1a365d;">${w.en}</td><td>${w.ko}</td></tr>`).join('');
         }
