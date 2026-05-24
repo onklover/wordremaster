@@ -1,1 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학교 단어시험용 사이트</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1a365d; --accent: #38b2ac; --bg: #f7fafc; --card-bg: #ffffff;
+            --text-main: #2d3748; --text-light: #718096; --danger: #e11d48;
+            --danger-bg: #ffe4e6; --success: #10b981; --warning: #f59e0b;
+        }
 
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif; background: var(--bg);
+            background-image: linear-gradient(rgba(26, 54, 93, 0.03) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(26, 54, 93, 0.03) 1px, transparent 1px);
+            background-size: 20px 20px; color: var(--text-main); margin: 0;
+            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+
+        .dashboard { width: 1000px; max-width: 95%; display: grid; grid-template-columns: 340px 1fr; gap: 30px; }
+        .sidebar { background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 15px; }
+        .sidebar h1 { font-size: 22px; font-weight: 600; margin: 0; margin-bottom: 5px; color: var(--primary); border-left: 4px solid var(--accent); padding-left: 15px; }
+        
+        .status-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px 10px; border-radius: 12px; display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; gap: 5px; }
+        .status-item { position: relative; }
+        .status-item:not(:last-child)::after { content: ''; position: absolute; right: 0; top: 20%; height: 60%; width: 1px; background: #e2e8f0; }
+        .status-item .num { font-size: 18px; font-weight: 700; color: var(--primary); }
+        .status-item #correct-count { color: var(--success); }
+        .status-item #wrong-count { color: var(--danger); }
+        .status-item .label { font-size: 11px; color: var(--text-light); margin-top: 4px; }
+        
+        .total-info { text-align: center; font-size: 13px; color: var(--text-light); background: #edf2f7; padding: 6px; border-radius: 6px; font-weight: 500; }
+        .reset-btn { background: #f1f5f9; color: var(--text-light); border: none; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
+        .reset-btn:hover { background: #e2e8f0; color: var(--danger); }
+        
+        .mode-btn { background: #edf2f7; border: none; padding: 14px 15px; border-radius: 10px; text-align: left; cursor: pointer; font-size: 15px; color: var(--text-main); transition: 0.2s; display: flex; align-items: center; gap: 10px; font-weight: 500; }
+        .mode-btn:hover, .mode-btn.active { background: var(--primary); color: white; }
+        #btn-retest.active { background: var(--danger); color: white; }
+        #btn-retest:hover:not(.active) { background: var(--danger-bg); color: var(--danger); }
+        
+        .badge { margin-left: auto; background: var(--danger); color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: bold; }
+        .action-btn { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: auto; transition: 0.2s; }
+        .action-btn:hover { background: #2c9a94; }
+        .note-btn { background: #475569; margin-top: 10px; }
+        .note-btn:hover { background: #334155; }
+        
+        .main-stage { background: var(--card-bg); border-radius: 20px; padding: 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; display: flex; flex-direction: column; justify-content: center; min-height: 450px; position: relative; }
+        #question-display { font-size: 44px; font-weight: 700; margin-bottom: 15px; color: var(--primary); word-break: keep-all; }
+        #answer-reveal { font-size: 22px; color: var(--danger); height: 35px; margin-bottom: 30px; opacity: 0; transition: opacity 0.3s; font-weight: 600; }
+        #answer-reveal.show { opacity: 1; }
+        
+        .quiz-input-group { display: flex; gap: 10px; max-width: 450px; width: 100%; margin: 0 auto; }
+        input[type="text"] { flex: 1; padding: 14px 20px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 16px; outline: none; }
+        input[type="text"]:focus { border-color: var(--accent); }
+        .btn-check { background: var(--primary); color: white; border: none; padding: 0 30px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+        .hint-text { margin-top: 25px; color: var(--text-light); cursor: pointer; text-decoration: underline; font-size: 14px; }
+        
+        .toast-container { position: fixed; top: 30px; left: 50%; transform: translateX(-50%) translateY(-20px); padding: 15px 30px; border-radius: 12px; color: white; font-weight: 600; font-size: 16px; box-shadow: 0 5px 15px rgba(0,0,0,0.15); opacity: 0; pointer-events: none; transition: transform 0.3s, opacity 0.3s; z-index: 2000; display: flex; align-items: center; gap: 10px; text-align: center; }
+        .toast-container.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast-success { background: var(--success); }
+        .toast-error { background: var(--danger); }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; width: 800px; max-height: 80vh; border-radius: 20px; padding: 30px; overflow: hidden; display: flex; flex-direction: column; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .table-container { overflow-y: auto; border: 1px solid #edf2f7; border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: #f8fafc; padding: 15px; position: sticky; top: 0; color: var(--primary); }
+        td { padding: 12px 15px; border-bottom: 1px solid #edf2f7; }
+        .close-modal { cursor: pointer; font-size: 24px; color: var(--text-light); }
+    </style>
+</head>
+<body>
+    <div id="ui-toast" class="toast-container"></div>
+
+    <div class="dashboard">
+        <div class="sidebar">
+            <h1>영단어 수행 대비용 사이트</h1>
+            <div class="status-box">
+                <div class="status-item"><div class="num" id="solved-count">0</div><div class="label">현재 진행</div></div>
+                <div class="status-item"><div class="num" id="correct-count">0</div><div class="label">정답 수</div></div>
+                <div class="status-item"><div class="num" id="wrong-count">0</div><div class="label">오답 수</div></div>
+            </div>
+            <div class="total-info">전체 단어 수: <span id="total-count">320</span>개</div>
+            <button class="reset-btn" onclick="resetProgress()"><i class="fa-solid fa-rotate-right"></i> 전체 초기화 (오답 노트 포함)</button>
+            <button class="mode-btn active" id="btn-mixed" onclick="setMode('mixed', this)"><i class="fa-solid fa-shuffle"></i> 섞어서 암기</button>
+            <button class="mode-btn" id="btn-ko" onclick="setMode('ko', this)"><i class="fa-solid fa-language"></i> 한국어 맞추기</button>
+            <button class="mode-btn" id="btn-en" onclick="setMode('en', this)"><i class="fa-solid fa-spell-check"></i> 영어 맞추기</button>
+            <button class="mode-btn" id="btn-retest" onclick="setMode('retest', this)"><i class="fa-solid fa-fire"></i> 오답 다시 풀기 <span class="badge" id="retest-badge">0</span></button>
+            <button class="action-btn note-btn" onclick="openNoteModal()"><i class="fa-solid fa-book-open"></i> 오답 노트 리스트 보기</button>
+            <button class="action-btn" onclick="openAllModal()"><i class="fa-solid fa-list"></i> 전체 단어 / 검색</button>
+        </div>
+        <div class="main-stage">
+            <div id="question-display">로딩 중...</div>
+            <div id="answer-reveal"></div>
+            <div class="quiz-input-group">
+                <input type="text" id="user-answer" placeholder="정답을 입력하세요..." autocomplete="off" onkeypress="handleKey(event)">
+                <button class="btn-check" onclick="checkAnswer()">확인</button>
+            </div>
+            <p class="hint-text" id="hint-btn" onclick="showAnswer()">정답이 기억나지 않나요? (오답 처리 후 넘어가기)</p>
+            <button id="next-btn" style="margin-top:20px; display:none; max-width: 200px; align-self: center;" class="action-btn" onclick="fetchWord()">다음 단어 ➔</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="all-modal">
+        <div class="modal-content">
+            <div class="modal-header"><h2 style="margin:0">전체 단어 목록</h2><span class="close-modal" onclick="closeModal('all-modal')">&times;</span></div>
+            <input type="text" id="search-input" placeholder="검색어 입력..." style="width: 100%; margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 10px;" onkeyup="filterWords()">
+            <div class="table-container"><table><thead><tr><th>번호</th><th>영단어</th><th>뜻</th></tr></thead><tbody id="word-list-body"></tbody></table></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="note-modal">
+        <div class="modal-content">
+            <div class="modal-header"><h2 style="margin:0; color: var(--danger);"><i class="fa-solid fa-book-open"></i> 오답 노트</h2><span class="close-modal" onclick="closeModal('note-modal')">&times;</span></div>
+            <p style="color: var(--text-light); margin-top: 0;">현재까지 누적된 오답입니다. '오답 다시 풀기' 모드에서 맞추면 지워집니다.</p>
+            <div class="table-container"><table><thead><tr><th>번호</th><th>영단어</th><th>뜻</th></tr></thead><tbody id="note-list-body"></tbody></table></div>
+        </div>
+    </div>
+
+    <script>
+        // 파이썬/엑셀 역할을 대신하는 320개 단어 데이터베이스 (JS 객체 배열)
+        const vocabData = [
+            {id: 1, en: "universality", ko: "보편성"}, {id: 2, en: "affect", ko: "정서"}, {id: 3, en: "variable", ko: "변수"}, {id: 4, en: "finite", ko: "유한한"},
+            {id: 5, en: "repertoire", ko: "목록, 레퍼토리, 수행 목록"}, {id: 6, en: "formulation", ko: "체계적 정리, 체계화"}, {id: 7, en: "separable", ko: "분리될 수 있는"}, {id: 8, en: "recognizable", ko: "인식할 수 있는"},
+            {id: 9, en: "derive from", ko: "~로부터 비롯되다"}, {id: 10, en: "posture", ko: "자세"}, {id: 11, en: "carry out", ko: "수행하다"}, {id: 12, en: "transform", ko: "전환시키다"},
+            {id: 13, en: "unconcealed", ko: "숨김없는, 노골적인"}, {id: 14, en: "dynamic", ko: "동적인"}, {id: 15, en: "bubble", ko: "올리다"}, {id: 16, en: "decrease", ko: "단축하다, 줄이다"},
+            {id: 17, en: "reveal", ko: "밝히다, 나타내다, 드러내다"}, {id: 18, en: "relevant", ko: "관련된"}, {id: 19, en: "analysis", ko: "분석"}, {id: 20, en: "log", ko: "기록, 일지"},
+            {id: 21, en: "significantly", ko: "상당히, 유의미하게"}, {id: 22, en: "disrupt", ko: "방해하다, 무너뜨리다, 붕괴시키다"}, {id: 23, en: "cognitive", ko: "인지의, 인지적인"}, {id: 24, en: "operate", ko: "작동하다"},
+            {id: 25, en: "paradigm", ko: "패러다임, 전형적인 예"}, {id: 26, en: "investigate", ko: "연구하다, 조사하다"}, {id: 27, en: "spatial", ko: "공간적인, 공간의"}, {id: 28, en: "visualize", ko: "생생하게 마음속에 그리다, 상상하다"},
+            {id: 29, en: "feature", ko: "특정 요소, 특징"}, {id: 30, en: "instruct", ko: "지시하다"}, {id: 31, en: "critical", ko: "중대한"}, {id: 32, en: "linearly", ko: "선형적으로"},
+            {id: 33, en: "authentic", ko: "진짜의, 진정성 있는"}, {id: 34, en: "manner", ko: "방식"}, {id: 35, en: "continuity", ko: "연속성"}, {id: 36, en: "compute", ko: "계산하다"},
+            {id: 37, en: "sum", ko: "합, 합계"}, {id: 38, en: "average", ko: "평균"}, {id: 39, en: "elementary", ko: "기본적인"}, {id: 40, en: "circuit", ko: "회로"},
+            {id: 41, en: "consciousness", ko: "의식"}, {id: 42, en: "bring about", ko: "~을 가져오다, ~을 초래하다"}, {id: 43, en: "keep track of", ko: "~을 추적하다, ~을 기록하다"}, {id: 44, en: "a series of", ko: "일련의"},
+            {id: 45, en: "flash", ko: "빠르게 보여 주다"}, {id: 46, en: "invisible", ko: "보이지 않는, 눈에 띄지 않는"}, {id: 47, en: "randomly", ko: "무작위로"}, {id: 48, en: "chance", ko: "우연"},
+            {id: 49, en: "evidence", ko: "증거, 흔적"}, {id: 50, en: "approximate", ko: "대략적인"}, {id: 51, en: "overall", ko: "전체적인, 전반적인"}, {id: 52, en: "subjectively", ko: "주관적으로"},
+            {id: 53, en: "weight", ko: "가중치를 부여하다, 가중치"}, {id: 54, en: "grasp", ko: "이해, 파악하다"}, {id: 55, en: "estimation", ko: "추정"}, {id: 56, en: "conscious", ko: "의식적인"},
+            {id: 57, en: "sensory", ko: "감각의"}, {id: 58, en: "capacity", ko: "능력, 수용력"}, {id: 59, en: "anticipate", ko: "예상하다, 기대하다"}, {id: 60, en: "heighten", ko: "높이다"},
+            {id: 61, en: "be subjected to", ko: "~을 받다"}, {id: 62, en: "intellectual", ko: "지적인"}, {id: 63, en: "unfold", ko: "전개되다, 펼쳐지다"}, {id: 64, en: "informative", ko: "유익한, 유용한 정보를 주는"},
+            {id: 65, en: "contrast", ko: "대조"}, {id: 66, en: "discomfort", ko: "불편함"}, {id: 67, en: "tense", ko: "긴장한"}, {id: 68, en: "dread", ko: "두려워하다"},
+            {id: 69, en: "conception", ko: "개념, 구상"}, {id: 70, en: "discount", ko: "고려하지 않다, 무시하다"}, {id: 71, en: "idealization", ko: "이상화"}, {id: 72, en: "volume", ko: "부피, 양"},
+            {id: 73, en: "obtain", ko: "성립하다, 적용되다"}, {id: 74, en: "molecule", ko: "분자"}, {id: 75, en: "descriptive", ko: "기술적인"}, {id: 76, en: "phenomenon", ko: "현상"},
+            {id: 77, en: "constraint", ko: "제약, 제한"}, {id: 78, en: "removed", ko: "떨어진, 다른, 동떨어진"}, {id: 79, en: "accuracy", ko: "정확도"}, {id: 80, en: "intuitively", ko: "직관적으로"},
+            {id: 81, en: "overturn", ko: "뒤집히다, 뒤집다"}, {id: 82, en: "demand", ko: "수요"}, {id: 83, en: "artificial", ko: "인공의, 인위적인"}, {id: 84, en: "effectively", ko: "실질적으로, 사실상"},
+            {id: 85, en: "implant", ko: "이식하다"}, {id: 86, en: "give out", ko: "멈추다, 정지하다"}, {id: 87, en: "readily", ko: "쉽게"}, {id: 88, en: "prestige", ko: "명망, 위신"},
+            {id: 89, en: "status", ko: "지위"}, {id: 90, en: "observe", ko: "인식하다, 알다"}, {id: 91, en: "dominance", ko: "우세함"}, {id: 92, en: "aggressive", ko: "공격적인"},
+            {id: 93, en: "fearsome", ko: "무시무시한"}, {id: 94, en: "warrior", ko: "전사"}, {id: 95, en: "universally", ko: "어디에서나, 보편적으로"}, {id: 96, en: "expert", ko: "전문가"},
+            {id: 97, en: "transmission", ko: "전파"}, {id: 98, en: "afford", ko: "제공하다"}, {id: 99, en: "general opinion", ko: "여론"}, {id: 100, en: "reputation", ko: "명성, 평판"},
+            {id: 101, en: "rub off on ~", ko: "~로 옮겨오다, ~에게 영향을 주다"}, {id: 102, en: "gratification", ko: "만족감"}, {id: 103, en: "inherit", ko: "상속받다, 물려받다"}, {id: 104, en: "surround", ko: "둘러싸다"},
+            {id: 105, en: "drastic", ko: "급진적인"}, {id: 106, en: "follow suit", ko: "따라 하다"}, {id: 107, en: "dairy", ko: "유제품의"}, {id: 108, en: "intake", ko: "섭취"},
+            {id: 109, en: "grain", ko: "곡물"}, {id: 110, en: "loose", ko: "포장되지 않은"}, {id: 111, en: "count", ko: "중요하다, 간주하다, 포함하다"}, {id: 112, en: "venture", ko: "모험"},
+            {id: 113, en: "legislation", ko: "법률, 입법"}, {id: 114, en: "regulate", ko: "규제하다"}, {id: 115, en: "cruelty", ko: "잔혹 행위"}, {id: 116, en: "adequate", ko: "적절한"},
+            {id: 117, en: "promotion", ko: "증진"}, {id: 118, en: "insufficient", ko: "충분하지 못한"}, {id: 119, en: "go far enough", ko: "충분하다"}, {id: 120, en: "excess", ko: "초과, 과잉"},
+            {id: 121, en: "inhumanely", ko: "비인도적으로"}, {id: 122, en: "conserve", ko: "보호하다"}, {id: 123, en: "threatened", ko: "멸종 위기에 처한"}, {id: 124, en: "supplier", ko: "공급국, 공급자"},
+            {id: 125, en: "hardware", ko: "장비"}, {id: 126, en: "backfire", ko: "역효과를 낳다"}, {id: 127, en: "generate", ko: "만들어 내다, 생성하다"}, {id: 128, en: "shipment", ko: "수송"},
+            {id: 129, en: "invasion", ko: "침공"}, {id: 130, en: "fall into the hands of", ko: "~의 손에 들어가다"}, {id: 131, en: "oppose", ko: "반대하다"}, {id: 132, en: "equipment", ko: "장비"},
+            {id: 133, en: "export", ko: "수출하다"}, {id: 134, en: "depict", ko: "묘사하다"}, {id: 135, en: "stereotyped", ko: "정형화된"}, {id: 136, en: "elaborate", ko: "정교한, 복잡한"},
+            {id: 137, en: "conduct", ko: "행동, 행위, 수행하다"}, {id: 138, en: "flexibility", ko: "유연성"}, {id: 139, en: "spatial", ko: "공간의"}, {id: 140, en: "timely", ko: "시기적절하게"},
+            {id: 141, en: "exclusive", ko: "전용의, 독점적인"}, {id: 142, en: "fundamental", ko: "매우 중요한, 근본적인"}, {id: 143, en: "representation", ko: "표상, 개념, 작용"}, {id: 144, en: "term", ko: "일컫다"},
+            {id: 145, en: "critically", ko: "결정적으로"}, {id: 146, en: "counterpart", ko: "상응하는 존재, 대응물"}, {id: 147, en: "verbally", ko: "언어로, 구두로"}, {id: 148, en: "minority", ko: "소수 집단"},
+            {id: 149, en: "maintain", ko: "유지하다, 주장하다"}, {id: 150, en: "consistently", ko: "일관되게, 지속적으로"}, {id: 151, en: "persuasive", ko: "설득력 있는"}, {id: 152, en: "geographically", ko: "지리적으로"},
+            {id: 153, en: "advocate", ko: "주창자, 옹호자"}, {id: 154, en: "alternative", ko: "대안"}, {id: 155, en: "mainstream", ko: "주류"}, {id: 156, en: "escalate", ko: "확대되다"},
+            {id: 157, en: "induce", ko: "유도하다"}, {id: 158, en: "assert", ko: "주장하다"}, {id: 159, en: "atypical", ko: "비전형적인"}, {id: 160, en: "essentialism", ko: "본질주의"},
+            {id: 161, en: "property", ko: "속성, 특성, 재산"}, {id: 162, en: "identify", ko: "식별하다"}, {id: 163, en: "fulfill", ko: "달성하다, 충족시키다"}, {id: 164, en: "functional", ko: "기능적인"},
+            {id: 165, en: "classification", ko: "분류"}, {id: 166, en: "defining", ko: "본질적인 의미를 규정하는"}, {id: 167, en: "challenge", ko: "이의를 제기하다, 도전하다"}, {id: 168, en: "notion", ko: "생각, 개념"},
+            {id: 169, en: "correspondingly", ko: "그에 상응하여"}, {id: 170, en: "standard", ko: "표준, 기준"}, {id: 171, en: "conform to", ko: "~을 준수하다"}, {id: 172, en: "outperform", ko: "더 뛰어나다, 능가하다"},
+            {id: 173, en: "bullying", ko: "괴롭힘"}, {id: 174, en: "sympathy", ko: "동정심"}, {id: 175, en: "rationale", ko: "설명, 이유, 근거"}, {id: 176, en: "predominantly", ko: "대부분, 대개"},
+            {id: 177, en: "informal", ko: "비공식적인"}, {id: 178, en: "constitute", ko: "구성하다"}, {id: 179, en: "discipline", ko: "규율"}, {id: 180, en: "integrated", ko: "통합적인, 통합된"},
+            {id: 181, en: "reasonably", ko: "상당히, 꽤"}, {id: 182, en: "resourced", ko: "자원을 갖춘"}, {id: 183, en: "address", ko: "다루다, 해결하다"}, {id: 184, en: "supremacy", ko: "우월주의"},
+            {id: 185, en: "embed", ko: "내포하다"}, {id: 186, en: "taken-for-granted", ko: "당연시되는"}, {id: 187, en: "assumption", ko: "전제, 가정"}, {id: 188, en: "contribute to", ko: "~의 한 원인이 되다"},
+            {id: 189, en: "frame", ko: "표현하다"}, {id: 190, en: "inclusive", ko: "포함하는, 포괄적인"}, {id: 191, en: "flourish", ko: "번성하다"}, {id: 192, en: "accomplish", ko: "성취하다"},
+            {id: 193, en: "specialize", ko: "전문화하다"}, {id: 194, en: "designation", ko: "직무, 명칭"}, {id: 195, en: "dwelling", ko: "주거지, 주택"}, {id: 196, en: "distinct", ko: "고유한, 뚜렷이 다른"},
+            {id: 197, en: "practitioner", ko: "종사자, 실무자"}, {id: 198, en: "institution", ko: "제도"}, {id: 199, en: "of sorts", ko: "일종의, 보잘것없는"}, {id: 200, en: "civilization", ko: "문명"},
+            {id: 201, en: "differentiated", ko: "분화된, 차별화된"}, {id: 202, en: "sophisticated", ko: "정교한, 복잡한"}, {id: 203, en: "communal", ko: "공동체적인"}, {id: 204, en: "formalize", ko: "형식을 갖추게 하다, 공식화하다"},
+            {id: 205, en: "association", ko: "조합, 협회, 단체"}, {id: 206, en: "college", ko: "조합, 대학, 전문학교"}, {id: 207, en: "merchant", ko: "상인, 상선의"}, {id: 208, en: "take hold", ko: "자리 잡다, 뿌리내리다"},
+            {id: 209, en: "construction", ko: "건설"}, {id: 210, en: "occupational", ko: "직업의"}, {id: 211, en: "colonial", ko: "식민지의"}, {id: 212, en: "regime", ko: "체제"},
+            {id: 213, en: "inequality", ko: "불평등"}, {id: 214, en: "depress", ko: "하락시키다, 떨어뜨리다, 억제하다"}, {id: 215, en: "payment", ko: "급여"}, {id: 216, en: "comparatively", ko: "비교적"},
+            {id: 217, en: "profitable", ko: "수익성 있는"}, {id: 218, en: "fortune", ko: "부, 재산, 운"}, {id: 219, en: "commerce", ko: "상업"}, {id: 220, en: "finance", ko: "금융"},
+            {id: 221, en: "enslaved", ko: "노예가 된, 노예화된"}, {id: 222, en: "compensate for", ko: "~에 대해 보상하다"}, {id: 223, en: "diplomatic", ko: "외교적인"}, {id: 224, en: "debt", ko: "빚, 부채"},
+            {id: 225, en: "shape", ko: "형성하다"}, {id: 226, en: "benefit from", ko: "~로부터 이익을 얻다"}, {id: 227, en: "enormous", ko: "엄청난"}, {id: 228, en: "neural network", ko: "신경망"},
+            {id: 229, en: "massive", ko: "막대한, 거대한"}, {id: 230, en: "fundamentally", ko: "근본적으로"}, {id: 231, en: "string", ko: "연속"}, {id: 232, en: "decode", ko: "해석하다"},
+            {id: 233, en: "contain", ko: "포함하다"}, {id: 234, en: "adjust", ko: "조정되다"}, {id: 235, en: "be involved in", ko: "~에 포함되어 있다"}, {id: 236, en: "copyright", ko: "저작권"},
+            {id: 237, en: "organic chemistry", ko: "유기 화학"}, {id: 238, en: "organic compound", ko: "유기 화합물"}, {id: 239, en: "construct", ko: "구성하다"}, {id: 240, en: "principle", ko: "원리"},
+            {id: 241, en: "bonding", ko: "결합"}, {id: 242, en: "reactivity", ko: "반응성"}, {id: 243, en: "longevity", ko: "수명, 장수"}, {id: 244, en: "accordingly", ko: "따라서, 그러므로"},
+            {id: 245, en: "profession", ko: "직업"}, {id: 246, en: "be comprised of", ko: "~로 구성되어 있다"}, {id: 247, en: "odor", ko: "냄새"}, {id: 248, en: "pesticide", ko: "살충제"},
+            {id: 249, en: "scarce", ko: "희소한"}, {id: 250, en: "inadequate", ko: "불충분한, 부족한"}, {id: 251, en: "patent", ko: "특허를 획득하다"}, {id: 252, en: "excludable", ko: "배제성이 있는, 배제적인"},
+            {id: 253, en: "substitution", ko: "대체, 대체물"}, {id: 254, en: "coal", ko: "석탄"}, {id: 255, en: "exert", ko: "발휘하다"}, {id: 256, en: "persist", ko: "끈질기게 계속하다, 지속되다"},
+            {id: 257, en: "account for", ko: "~을 설명하다"}, {id: 258, en: "regulatory", ko: "조절하는"}, {id: 259, en: "inevitable", ko: "불가피한"}, {id: 260, en: "temptation", ko: "유혹"},
+            {id: 261, en: "nature", ko: "특성, 성질"}, {id: 262, en: "demanding", ko: "힘든, 부담이 큰"}, {id: 263, en: "inhibit", ko: "방해하다, 억제하다"}, {id: 264, en: "disprove", ko: "오류를 입증하다"},
+            {id: 265, en: "proposition", ko: "명제"}, {id: 266, en: "prosperity", ko: "번영, 호황"}, {id: 267, en: "considerable", ko: "상당한, 많은"}, {id: 268, en: "constant", ko: "일정한, 변함없는"},
+            {id: 269, en: "sustained", ko: "지속적인"}, {id: 270, en: "substantial", ko: "상당한"}, {id: 271, en: "contradict", ko: "반박하다"}, {id: 272, en: "investigator", ko: "연구자"},
+            {id: 273, en: "duty", ko: "세금, 의무"}, {id: 274, en: "in effect", ko: "시행 중인"}, {id: 275, en: "strike", ko: "파업"}, {id: 276, en: "establishment", ko: "설립, 정착, 확립"},
+            {id: 277, en: "doubtless", ko: "필시, 반드시"}, {id: 278, en: "state", ko: "상태"}, {id: 279, en: "separate out", ko: "~을 분리하다"}, {id: 280, en: "sensitive", ko: "민감한"},
+            {id: 281, en: "vulnerable", ko: "취약한"}, {id: 282, en: "fluctuation", ko: "변동"}, {id: 283, en: "downturn", ko: "침체"}, {id: 284, en: "outbreak", ko: "발생"},
+            {id: 285, en: "revenue", ko: "수익, 수입"}, {id: 286, en: "fragility", ko: "취약성"}, {id: 287, en: "pronounced", ko: "두드러진"}, {id: 288, en: "trade union", ko: "노동조합"},
+            {id: 289, en: "cyclical", ko: "순환적인"}, {id: 290, en: "responsiveness", ko: "대응 능력"}, {id: 291, en: "initiative", ko: "진취적 계획"}, {id: 292, en: "implement", ko: "시행하다"},
+            {id: 293, en: "extensive", ko: "광범위한"}, {id: 294, en: "alternate", ko: "번갈아 하다"}, {id: 295, en: "asset", ko: "자산"}, {id: 296, en: "expendable", ko: "쉽게 희생될 수 있는, 소모성의"},
+            {id: 297, en: "deplete", ko: "고갈시키다"}, {id: 298, en: "absorb", ko: "흡수하다"}, {id: 299, en: "pollutant", ko: "오염 물질"}, {id: 300, en: "incidence", ko: "발생, 발생률"},
+            {id: 301, en: "toxic", ko: "유독성의"}, {id: 302, en: "undesirable", ko: "바람직하지 않은"}, {id: 303, en: "draft", ko: "~의 기초를 만들다, 설계하다"}, {id: 304, en: "essential", ko: "본질적인"},
+            {id: 305, en: "element", ko: "요소"}, {id: 306, en: "commonality", ko: "공통점"}, {id: 307, en: "acquire", ko: "얻다, 습득하다"}, {id: 308, en: "context", ko: "상황"},
+            {id: 309, en: "at hand", ko: "당면한"}, {id: 310, en: "attributable", ko: "기인하는"}, {id: 311, en: "recall", ko: "기억해 내다"}, {id: 312, en: "resolution", ko: "해상도"},
+            {id: 313, en: "recollection", ko: "기억, 회상"}, {id: 314, en: "strikingly", ko: "놀랍도록, 현저하게"}, {id: 315, en: "vivid", ko: "생생한"}, {id: 316, en: "imperfect", ko: "불완전한"},
+            {id: 317, en: "degraded", ko: "훼손된, 퇴화한"}, {id: 318, en: "dim", ko: "희미한, 흐릿한"}, {id: 319, en: "fiction", ko: "허구"}, {id: 320, en: "distortion", ko: "왜곡"}
+        ];
+
+        let currentMode = 'mixed';
+        let currentWordData = null; 
+        let incorrectWords = [];
+        let correctCount = 0; let wrongCount = 0; let hasSeenAnswer = false;
+
+        window.onload = () => {
+            document.getElementById('total-count').innerText = vocabData.length;
+            renderTable('word-list-body', vocabData);
+            fetchWord();
+        };
+
+        function showNotification(message, type = 'success') {
+            const toast = document.getElementById('ui-toast');
+            toast.innerHTML = message;
+            toast.className = `toast-container show ${type === 'success' ? 'toast-success' : 'toast-error'}`;
+            setTimeout(() => { toast.classList.remove('show'); }, 2000);
+        }
+
+        function updateScoreboard() {
+            document.getElementById('solved-count').innerText = correctCount + wrongCount;
+            document.getElementById('correct-count').innerText = correctCount;
+            document.getElementById('wrong-count').innerText = wrongCount;
+            
+            const badge = document.getElementById('retest-badge');
+            badge.innerText = incorrectWords.length;
+            badge.style.background = incorrectWords.length > 0 ? 'var(--danger)' : 'var(--text-light)';
+        }
+
+        function resetProgress() {
+            if (correctCount + wrongCount === 0 && incorrectWords.length === 0) {
+                showNotification("초기화할 데이터가 없습니다.", "error"); return;
+            }
+            if (confirm("정말 학습 카운트와 오답 노트를 모두 완전히 초기화하시겠습니까?")) {
+                correctCount = 0; wrongCount = 0; incorrectWords = []; 
+                updateScoreboard();
+                if(currentMode === 'retest') document.getElementById('btn-mixed').click();
+                else fetchWord();
+                showNotification("모든 기록이 깔끔하게 초기화되었습니다.");
+            }
+        }
+
+        function setMode(mode, btn) {
+            if (currentMode === mode) return;
+            if (mode === 'retest' && incorrectWords.length === 0) {
+                showNotification("현재 저장된 오답이 없습니다. 일반 모드로 학습해주세요.", "error"); return;
+            }
+            if ((correctCount + wrongCount) > 0) {
+                if (!confirm("경고: 모드를 변경하면 현재 [학습 카운트]가 0으로 초기화됩니다.\n(※ 오답 노트는 유지됨)\n변경하시겠습니까?")) return;
+            }
+
+            currentMode = mode; correctCount = 0; wrongCount = 0; updateScoreboard();
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            fetchWord();
+        }
+
+        function displayQuestionUI(data) {
+            currentWordData = data;
+            document.getElementById('question-display').innerText = data.question;
+            hasSeenAnswer = false;
+            
+            const reveal = document.getElementById('answer-reveal');
+            reveal.innerText = ''; reveal.classList.remove('show');
+            document.getElementById('user-answer').value = '';
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('user-answer').focus();
+        }
+
+        // 클라이언트 단에서 랜덤으로 단어 추출하는 로직 (서버 대체)
+        function fetchWord() {
+            let pool = currentMode === 'retest' ? incorrectWords : vocabData;
+
+            if (currentMode === 'retest' && pool.length === 0) {
+                showNotification("축하합니다! 오답 문제를 모두 맞췄습니다. 일반 모드로 돌아갑니다.", "success");
+                document.getElementById('btn-mixed').click();
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * pool.length);
+            const word = pool[randomIndex];
+
+            let q, a;
+            let isEnToKo;
+
+            if (currentMode === 'ko') isEnToKo = true;
+            else if (currentMode === 'en') isEnToKo = false;
+            else isEnToKo = Math.random() > 0.5;
+
+            if (isEnToKo) { q = word.en; a = word.ko; } 
+            else { q = word.ko; a = word.en; }
+
+            displayQuestionUI({ id: word.id, en: word.en, ko: word.ko, question: q, answer: a });
+        }
+
+        function handleWrongAnswer(userInput) {
+            wrongCount++;
+            if (!incorrectWords.find(w => w.id === currentWordData.id)) incorrectWords.push(currentWordData);
+            updateScoreboard();
+            
+            if (userInput !== null) showNotification(`❌ 오답입니다!<br>정답은 [ ${currentWordData.answer} ] 입니다.`, "error");
+            else showNotification(`💡 정답은 [ ${currentWordData.answer} ] 입니다.`, "error");
+            
+            fetchWord();
+        }
+
+        function checkAnswer() {
+            const userInput = document.getElementById('user-answer').value.trim().toLowerCase();
+            if (userInput === "") return;
+
+            const cleanCorrectAnswer = currentWordData.answer.toLowerCase();
+            const acceptableAnswers = currentWordData.answer.split(',').map(str => str.trim().toLowerCase());
+            const isCorrect = (userInput === cleanCorrectAnswer) || acceptableAnswers.includes(userInput);
+
+            if (isCorrect) {
+                if (!hasSeenAnswer && currentMode !== 'retest') correctCount++;
+                if (currentMode === 'retest') {
+                    incorrectWords = incorrectWords.filter(w => w.id !== currentWordData.id);
+                    showNotification("✅ 완벽합니다! 오답 노트에서 제거되었습니다.", "success");
+                } else {
+                    showNotification("✅ 정답입니다!", "success");
+                }
+                updateScoreboard();
+                fetchWord();
+            } else {
+                handleWrongAnswer(userInput);
+            }
+        }
+
+        function handleKey(e) { if (e.key === 'Enter') checkAnswer(); }
+        function showAnswer() { if (hasSeenAnswer) return; hasSeenAnswer = true; handleWrongAnswer(null); }
+
+        function renderTable(tbodyId, data) {
+            const body = document.getElementById(tbodyId);
+            if (data.length === 0) {
+                body.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 30px; color:#999;">데이터가 없습니다.</td></tr>`;
+                return;
+            }
+            body.innerHTML = data.map(w => `<tr><td>${w.id}</td><td style="font-weight:600; color:#1a365d;">${w.en}</td><td>${w.ko}</td></tr>`).join('');
+        }
+
+        function filterWords() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = vocabData.filter(w => w.en.toLowerCase().includes(query) || w.ko.toLowerCase().includes(query));
+            renderTable('word-list-body', filtered);
+        }
+
+        function openAllModal() { document.getElementById('all-modal').style.display = 'flex'; }
+        function openNoteModal() { renderTable('note-list-body', incorrectWords); document.getElementById('note-modal').style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    </script>
+</body>
+</html>
