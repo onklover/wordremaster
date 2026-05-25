@@ -98,7 +98,7 @@
         .btn-next-memo { background: var(--accent); color: white; width: 100%; }
         .btn-next-memo:hover { background: #2c9a94; }
 
-        /* 공통 이전 버튼 스타일 (크기 조정) */
+        /* 공통 이전 버튼 스타일 */
         .btn-prev-action { 
             display: none; align-items: center; gap: 8px; justify-content: center;
             background: #94a3b8; color: white; border: none; 
@@ -144,6 +144,7 @@
         .item-delete-btn { background: transparent; color: #cbd5e1; border: none; cursor: pointer; padding: 5px; font-size: 16px; transition: color 0.2s; }
         .item-delete-btn:hover { color: var(--danger); }
 
+        /* 모바일 환경 대응 추가 조정 */
         @media (max-width: 768px) {
             body { align-items: flex-start; padding-bottom: 30vh; } 
             .dashboard { grid-template-columns: 1fr; gap: 15px; margin: 15px 0; }
@@ -163,7 +164,11 @@
             .btn-check { padding: 15px; width: 100%; border-radius: 10px; }
             .seq-toggle-group { bottom: 20px; flex-wrap: wrap; }
             .toast-container { width: 90%; font-size: 14px; padding: 12px; white-space: normal; }
-            .modal-content { width: 95%; max-height: 90vh; padding: 20px; }
+            
+            /* 모달 세로 크기를 좀 더 넉넉하게 줄이고, x 버튼 터치 영역 보장 */
+            .modal-content { width: 95%; max-height: 75vh; padding: 20px; }
+            .close-modal { font-size: 28px; padding: 5px; margin-right: -5px; }
+            
             th, td { padding: 10px; font-size: 14px; }
         }
     </style>
@@ -891,13 +896,33 @@
             renderTable('word-list-body', filtered, false);
         }
 
-        function openAllModal() { document.getElementById('all-modal').style.display = 'flex'; }
+        /* 뒤로가기 모달 연동을 위한 pushState 추가 */
+        function openAllModal() { 
+            document.getElementById('all-modal').style.display = 'flex'; 
+            history.pushState({ modal: 'all-modal' }, '', '#all-modal');
+        }
+        
         function openNoteModal() { 
             const list = mainMode === 'quiz' ? quizIncorrectWords : memoIncorrectWords;
             renderTable('note-list-body', list, true); 
             document.getElementById('note-modal').style.display = 'flex'; 
+            history.pushState({ modal: 'note-modal' }, '', '#note-modal');
         }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        function closeModal(id) { 
+            document.getElementById(id).style.display = 'none'; 
+            // X 버튼으로 수동 닫을 때 쌓인 히스토리도 함께 뒤로가기 처리
+            if (location.hash === '#' + id) {
+                history.back();
+            }
+        }
+
+        // 모바일 및 웹 브라우저의 뒤로가기 이벤트 감지 시 모든 모달 닫기
+        window.addEventListener('popstate', function() {
+            document.getElementById('all-modal').style.display = 'none';
+            document.getElementById('note-modal').style.display = 'none';
+        });
+
     </script>
 </body>
 </html>
