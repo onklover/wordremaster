@@ -71,6 +71,10 @@
 
         .main-stage { background: var(--card-bg); border-radius: 20px; padding: 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; display: flex; flex-direction: column; justify-content: center; min-height: 480px; position: relative; }
         
+        .retry-msg { font-size: 13px; font-weight: bold; margin: 0 auto 15px auto; padding: 8px 15px; border-radius: 8px; display: inline-block; animation: pop 0.3s ease; }
+        .retry-msg.correct { background: #d1fae5; color: #059669; border: 1px solid #34d399; }
+        .retry-msg.wrong { background: #ffe4e6; color: #e11d48; border: 1px solid #fda4af; }
+
         #question-display { font-size: 44px; font-weight: 700; margin-bottom: 15px; color: var(--primary); word-break: keep-all; }
         #answer-reveal { font-size: 22px; color: var(--danger); height: 35px; margin-bottom: 30px; opacity: 0; transition: opacity 0.3s; font-weight: 600; }
         #answer-reveal.show { opacity: 1; }
@@ -94,7 +98,16 @@
         .btn-next-memo { background: var(--accent); color: white; width: 100%; }
         .btn-next-memo:hover { background: #2c9a94; }
 
-        /* Sequence Toggle Group (Absolute Positioning) */
+        /* 공통 이전 버튼 스타일 (크기 조정) */
+        .btn-prev-action { 
+            display: none; align-items: center; gap: 8px; justify-content: center;
+            background: #94a3b8; color: white; border: none; 
+            padding: 10px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; 
+            transition: 0.2s; width: fit-content; margin: 25px auto 0 auto; font-size: 14px; 
+        }
+        .btn-prev-action:hover { background: #64748b; }
+
+        /* Sequence Toggle Group */
         .seq-toggle-group { position: absolute; bottom: 30px; left: 0; width: 100%; display: flex; justify-content: center; gap: 10px; }
         .seq-toggle-btn { display: flex; align-items: center; gap: 8px; background: #e2e8f0; color: var(--text-light); border: none; padding: 10px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
         .seq-toggle-btn:hover { background: #cbd5e1; }
@@ -148,7 +161,7 @@
             .quiz-input-group { flex-direction: column; gap: 10px; }
             input[type="text"] { padding: 15px; font-size: 16px; text-align: center; }
             .btn-check { padding: 15px; width: 100%; border-radius: 10px; }
-            .seq-toggle-group { bottom: 20px; }
+            .seq-toggle-group { bottom: 20px; flex-wrap: wrap; }
             .toast-container { width: 90%; font-size: 14px; padding: 12px; white-space: normal; }
             .modal-content { width: 95%; max-height: 90vh; padding: 20px; }
             th, td { padding: 10px; font-size: 14px; }
@@ -214,6 +227,7 @@
         </div>
 
         <div class="main-stage">
+            <div id="retry-msg" style="display: none;"></div>
             <div id="question-display">로딩 중...</div>
             <div id="answer-reveal"></div>
             
@@ -224,7 +238,7 @@
                 <button class="btn-check" onclick="checkAnswer()">확인</button>
             </div>
             <p class="hint-text" id="hint-btn" onclick="showAnswer()">정답이 기억나지 않나요? (오답 처리)</p>
-            <button id="next-btn" style="margin-top:20px; display:none; width: 100%; max-width: 200px; align-self: center;" class="action-btn" onclick="fetchWord()">다음 단어 ➔</button>
+            <button id="btn-prev-quiz" class="btn-prev-action" onclick="goBack()"><i class="fa-solid fa-rotate-left"></i> 이전 단어</button>
 
             <div class="memo-action-group" id="memo-action-group">
                 <div id="memo-state-1">
@@ -238,6 +252,7 @@
                     <button class="memo-btn btn-next-memo" onclick="nextMemoWord()">다음 단어로 넘어가기 ➔</button>
                 </div>
             </div>
+            <button id="btn-prev-memo" class="btn-prev-action" onclick="goBack()"><i class="fa-solid fa-rotate-left"></i> 이전 단어</button>
 
             <div class="seq-toggle-group" id="seq-toggle-group">
                 <button id="seq-btn-seq" class="seq-toggle-btn active" onclick="setSeqMode('seq')"><i class="fa-solid fa-arrow-down-1-9"></i> 순서대로 표시</button>
@@ -357,10 +372,9 @@
 
         let mainMode = 'quiz';
         
-        /* seqMode 의 기본값을 'seq' (순서대로) 로 수정했습니다. */
         const appState = {
-            quiz: { remaining: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'seq', startId: 1, endId: vocabData.length },
-            memorize: { remaining: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'seq', startId: 1, endId: vocabData.length }
+            quiz: { remaining: [], history: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'seq', startId: 1, endId: vocabData.length },
+            memorize: { remaining: [], history: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'seq', startId: 1, endId: vocabData.length }
         };
 
         let quizIncorrectWords = [];
@@ -411,7 +425,6 @@
             }
         }
 
-        /* 변경됨: 알림 메시지도 버튼 텍스트에 맞춰 다듬었습니다. */
         function setSeqMode(mode) {
             const state = getState();
             if (state.seqMode === mode) return;
@@ -421,6 +434,7 @@
                 state.correct = 0;
                 state.wrong = 0;
                 state.currentWord = null;
+                state.history = []; 
                 
                 initPool(mainMode);
                 fetchWord();
@@ -488,6 +502,8 @@
 
         function nextMemoWord() {
             const state = getState();
+            state.history.push({ word: state.currentWord, result: 'memo' }); 
+
             if (state.typeMode === 'retest') {
                 memoIncorrectWords = memoIncorrectWords.filter(w => w.id !== state.currentWord.id);
                 showNotification("암기 완료! 노트에서 지워졌습니다.", "success");
@@ -534,6 +550,7 @@
                 state.correct = 0; 
                 state.wrong = 0; 
                 state.currentWord = null;
+                state.history = []; 
                 
                 if (state.typeMode === 'retest') {
                     document.getElementById('btn-mixed').click();
@@ -595,6 +612,7 @@
                 state.correct = 0; 
                 state.wrong = 0; 
                 state.currentWord = null;
+                state.history = []; 
                 initPool(mainMode);
                 fetchWord();
                 showNotification("진행도가 초기화되었습니다.");
@@ -614,51 +632,111 @@
                 state.wrong = 0;
                 state.currentWord = null;
                 state.typeMode = mode; 
+                state.history = []; 
                 initPool(mainMode); 
                 fetchWord();
                 showNotification("학습 방식이 변경되었습니다.");
             });
         }
 
+        function goBack() {
+            const state = getState();
+            if (state.history.length === 0) {
+                showNotification("이전 단어가 없습니다.", "error");
+                return;
+            }
+
+            if (state.currentWord) {
+                state.remaining.unshift(state.currentWord);
+            }
+
+            const prev = state.history.pop();
+
+            if (mainMode === 'quiz') {
+                if (prev.result === 'correct') {
+                    state.correct = Math.max(0, state.correct - 1);
+                    if (state.typeMode === 'retest' && !quizIncorrectWords.find(w => w.id === prev.word.id)) {
+                        quizIncorrectWords.push({id: prev.word.id, en: prev.word.en, ko: prev.word.ko});
+                    }
+                } else if (prev.result === 'wrong') {
+                    state.wrong = Math.max(0, state.wrong - 1);
+                }
+            } else {
+                state.correct = Math.max(0, state.correct - 1);
+                if (state.typeMode === 'retest' && !memoIncorrectWords.find(w => w.id === prev.word.id)) {
+                    memoIncorrectWords.push({id: prev.word.id, en: prev.word.en, ko: prev.word.ko});
+                }
+            }
+
+            updateScoreboard();
+            displayQuestionUI(prev.word); 
+
+            const msgDiv = document.getElementById('retry-msg');
+            if (mainMode === 'quiz') {
+                msgDiv.style.display = 'inline-block';
+                if (prev.result === 'correct') {
+                    msgDiv.innerText = "한 번 맞춘 문제입니다, 다시 도전해보세요!";
+                    msgDiv.className = "retry-msg correct";
+                } else {
+                    msgDiv.innerText = "한 번 틀렸던 문제입니다.";
+                    msgDiv.className = "retry-msg wrong";
+                }
+            }
+        }
+
         function displayQuestionUI(data) {
             const state = getState();
             state.currentWord = data;
+            
+            document.getElementById('retry-msg').style.display = 'none';
             document.getElementById('question-display').innerText = data.question;
             hasSeenAnswer = false;
             
             const reveal = document.getElementById('answer-reveal');
             reveal.innerText = ''; reveal.classList.remove('show');
             document.getElementById('user-answer').value = '';
-            document.getElementById('next-btn').style.display = 'none';
 
             if (mainMode === 'quiz') {
                 document.getElementById('quiz-input-group').style.display = 'flex';
                 document.getElementById('hint-btn').style.display = 'block';
+                document.getElementById('btn-prev-quiz').style.display = 'inline-flex'; 
+                
                 document.getElementById('memo-action-group').style.display = 'none';
+                document.getElementById('btn-prev-memo').style.display = 'none';
+                
                 if(window.innerWidth > 768) document.getElementById('user-answer').focus();
             } else {
                 document.getElementById('quiz-input-group').style.display = 'none';
                 document.getElementById('hint-btn').style.display = 'none';
+                document.getElementById('btn-prev-quiz').style.display = 'none'; 
+                
                 document.getElementById('memo-action-group').style.display = 'flex';
                 document.getElementById('memo-state-1').style.display = 'block';
                 document.getElementById('memo-state-2').style.display = 'none';
+                
+                document.getElementById('btn-prev-memo').style.display = 'inline-flex';
             }
         }
 
         function fetchWord() {
             const state = getState();
             if (state.remaining.length === 0) {
+                state.currentWord = null; 
                 if (state.typeMode === 'retest') {
                     showNotification("축하합니다! 다시 보기 목록을 모두 완료했습니다.", "success");
                     setMode('mixed');
                 } else {
                     showNotification("범위 내의 모든 단어를 확인했습니다!", "success");
+                    document.getElementById('retry-msg').style.display = 'none';
                     document.getElementById('question-display').innerText = "학습 완료! 🎉";
                     document.getElementById('answer-reveal').classList.remove('show');
+                    
                     document.getElementById('quiz-input-group').style.display = 'none';
                     document.getElementById('hint-btn').style.display = 'none';
+                    document.getElementById('btn-prev-quiz').style.display = 'none';
+                    
                     document.getElementById('memo-action-group').style.display = 'none';
-                    document.getElementById('next-btn').style.display = 'none';
+                    document.getElementById('btn-prev-memo').style.display = 'none';
                 }
                 return;
             }
@@ -685,6 +763,8 @@
 
         function handleWrongAnswer(userInput) {
             const state = getState();
+            state.history.push({ word: state.currentWord, result: 'wrong' }); 
+
             state.wrong++;
             if (!quizIncorrectWords.find(w => w.id === state.currentWord.id)) {
                 quizIncorrectWords.push({id: state.currentWord.id, en: state.currentWord.en, ko: state.currentWord.ko});
@@ -706,6 +786,8 @@
             const isCorrect = (userInput === cleanCorrectAnswer) || acceptableAnswers.includes(userInput);
 
             if (isCorrect) {
+                state.history.push({ word: state.currentWord, result: 'correct' }); 
+
                 if (state.typeMode === 'retest') {
                     quizIncorrectWords = quizIncorrectWords.filter(w => w.id !== state.currentWord.id);
                     showNotification("✅ 완벽합니다! 오답 노트에서 제거되었습니다.", "success");
