@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>학교 단어시험 대비</title>
+    <title>단일 파일 영단어장 (모바일 최적화 & 범위 설정)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -36,6 +36,15 @@
         .status-item .label { font-size: 11px; color: var(--text-light); margin-top: 4px; }
         
         .total-info { text-align: center; font-size: 13px; color: var(--text-light); background: #edf2f7; padding: 6px; border-radius: 6px; font-weight: 500; }
+        
+        /* 🎯 단어 범위 설정 UI 스타일 */
+        .range-box { background: #edf2f7; padding: 12px; border-radius: 10px; text-align: center; font-size: 14px; }
+        .range-box label { font-weight: 600; color: var(--primary); display: block; margin-bottom: 8px; font-size: 13px; }
+        .range-inputs { display: flex; align-items: center; justify-content: space-between; gap: 5px; margin-bottom: 8px; }
+        .range-inputs input { flex: 1; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center; font-size: 14px; }
+        .range-apply-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; }
+        .range-apply-btn:hover { background: #0f233f; }
+
         .reset-btn { background: #f1f5f9; color: var(--text-light); border: none; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
         .reset-btn:hover { background: #e2e8f0; color: var(--danger); }
         
@@ -85,6 +94,10 @@
             .sidebar h1 { font-size: 20px; }
             .status-box { padding: 12px 5px; }
             .status-item .num { font-size: 16px; }
+            
+            /* 범위 설정 박스 모바일 대응 */
+            .range-box { display: flex; flex-direction: column; gap: 5px; padding: 10px; }
+            
             .mode-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
             .mode-btn { font-size: 13px; padding: 12px 8px; justify-content: center; text-align: center; gap: 6px; }
             .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
@@ -115,10 +128,18 @@
             
             <div class="total-info">
                 남은 단어: <span id="remain-count" style="font-weight:700; color:var(--primary);">320</span> 
-                / 전체: <span id="total-count">320</span>
+                / 출제 범위: <span id="total-count">320</span>
             </div>
 
-            <button class="reset-btn" onclick="resetProgress()"><i class="fa-solid fa-rotate-right"></i> 전체 초기화 (오답 노트 포함)</button>
+            <div class="range-box">
+                <label>📌 출제 범위 설정</label>
+                <div class="range-inputs">
+                    <input type="number" id="range-start" value="1" min="1" max="320">
+                    <span>~</span>
+                    <input type="number" id="range-end" value="320" min="1" max="320">
+                </div>
+                <button class="range-apply-btn" onclick="applyRange()">해당 범위 적용 및 초기화</button>
+            </div>
             
             <div class="mode-buttons">
                 <button class="mode-btn active" id="btn-mixed" onclick="setMode('mixed', this)"><i class="fa-solid fa-shuffle"></i> 섞어서 암기</button>
@@ -128,7 +149,7 @@
             </div>
 
             <div class="action-buttons">
-                <button class="action-btn note-btn" onclick="openNoteModal()"><i class="fa-solid fa-book-open"></i> 오답 노트 리스트 보기</button>
+                <button class="action-btn note-btn" onclick="openNoteModal()"><i class="fa-solid fa-book-open"></i> 오답 노트 보기</button>
                 <button class="action-btn" onclick="openAllModal()"><i class="fa-solid fa-list"></i> 전체 단어 목록</button>
             </div>
         </div>
@@ -250,23 +271,56 @@
         let currentMode = 'mixed'; 
         let currentWordData = null; 
         let incorrectWords = [];
-        let remainingWords = []; // [핵심] 현재 세션에서 아직 출제되지 않은 단어들 보관
+        let remainingWords = []; 
         
         let correctCount = 0; let wrongCount = 0; let hasSeenAnswer = false;
+        
+        // 🎯 출제 범위 변수
+        let currentStartId = 1;
+        let currentEndId = vocabData.length;
 
         window.onload = () => {
-            document.getElementById('total-count').innerText = vocabData.length;
+            document.getElementById('range-end').value = vocabData.length;
             renderTable('word-list-body', vocabData);
-            initPool(); // 최초 실행 시 풀 세팅
+            initPool();
             fetchWord();
         };
 
-        // 🎯 풀 초기화: 모드에 따라 출제할 단어 배열을 복사하여 준비합니다.
+        // 🎯 범위 설정 적용 함수
+        function applyRange() {
+            const startInput = parseInt(document.getElementById('range-start').value);
+            const endInput = parseInt(document.getElementById('range-end').value);
+
+            if (isNaN(startInput) || isNaN(endInput) || startInput < 1 || endInput > vocabData.length || startInput > endInput) {
+                showNotification("올바른 범위를 입력해주세요. (1 ~ 320)", "error");
+                return;
+            }
+
+            if (confirm(`범위를 ${startInput}번부터 ${endInput}번까지로 설정하고\n진행도를 초기화하시겠습니까?\n(※ 오답 노트는 유지됩니다)`)) {
+                currentStartId = startInput;
+                currentEndId = endInput;
+                
+                correctCount = 0; wrongCount = 0;
+                
+                if (currentMode === 'retest') {
+                    document.getElementById('btn-mixed').click(); // 복습 모드였다면 섞어서 모드로 강제 변경
+                } else {
+                    initPool();
+                    fetchWord();
+                }
+                showNotification(`출제 범위가 ${startInput}번 ~ ${endInput}번으로 설정되었습니다.`);
+            }
+        }
+
+        // 🎯 풀 초기화 (범위 필터링 포함)
         function initPool() {
             if (currentMode === 'retest') {
                 remainingWords = [...incorrectWords];
+                document.getElementById('total-count').innerText = incorrectWords.length;
             } else {
-                remainingWords = [...vocabData];
+                // 설정된 번호 범위 내의 단어만 추출
+                remainingWords = vocabData.filter(w => w.id >= currentStartId && w.id <= currentEndId);
+                document.getElementById('total-count').innerText = (currentEndId - currentStartId + 1);
             }
             updateScoreboard();
         }
@@ -287,7 +341,6 @@
             badge.innerText = incorrectWords.length;
             badge.style.background = incorrectWords.length > 0 ? 'var(--danger)' : 'var(--text-light)';
 
-            // 남은 단어 표시 갱신
             document.getElementById('remain-count').innerText = remainingWords.length;
         }
 
@@ -300,7 +353,7 @@
                 if(currentMode === 'retest') {
                     document.getElementById('btn-mixed').click();
                 } else {
-                    initPool(); // 진행도를 밀면 풀도 다시 꽉 채움
+                    initPool(); 
                     fetchWord();
                 }
                 showNotification("모든 기록이 깔끔하게 초기화되었습니다.");
@@ -319,7 +372,7 @@
             document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active'); 
             
-            initPool(); // 모드가 바뀌면 새로운 방식의 풀로 세팅
+            initPool(); 
             fetchWord();
         }
 
@@ -332,7 +385,6 @@
             reveal.innerText = ''; reveal.classList.remove('show');
             document.getElementById('user-answer').value = '';
             
-            // UI 원상복구 (학습 완료 상태에서 다시 시작할 때 대비)
             document.getElementById('input-group').style.display = 'flex';
             document.getElementById('hint-btn').style.display = 'block';
             document.getElementById('next-btn').style.display = 'none';
@@ -343,13 +395,12 @@
         }
 
         function fetchWord() {
-            // 🎯 모든 단어를 다 풀었을 때의 처리
             if (remainingWords.length === 0) {
                 if (currentMode === 'retest') {
                     showNotification("축하합니다! 오답 문제를 한 번씩 모두 풀었습니다.", "success");
                     document.getElementById('btn-mixed').click();
                 } else {
-                    showNotification("모든 단어를 풀었습니다! 다른 모드를 선택하거나 초기화해주세요.", "success");
+                    showNotification("범위 내의 모든 단어를 풀었습니다!", "success");
                     document.getElementById('question-display').innerText = "학습 완료! 🎉";
                     document.getElementById('answer-reveal').classList.remove('show');
                     document.getElementById('input-group').style.display = 'none';
@@ -359,11 +410,9 @@
                 return;
             }
 
-            // 남은 단어 배열에서 랜덤으로 인덱스를 추출
             const randomIndex = Math.floor(Math.random() * remainingWords.length);
             const word = remainingWords[randomIndex];
             
-            // 🎯 핵심 로직: 선택된 단어를 남은 단어 배열에서 삭제 (중복 방지)
             remainingWords.splice(randomIndex, 1);
             updateScoreboard();
 
