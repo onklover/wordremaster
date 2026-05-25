@@ -26,12 +26,16 @@
         
         .sidebar { background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 15px; }
         
-        /* 🎯 대분류 모드 토글 (문제 모드 / 암기 모드) */
         .main-mode-toggle { display: flex; background: #e2e8f0; border-radius: 12px; padding: 5px; margin-bottom: 5px; }
         .main-mode-toggle button { flex: 1; border: none; background: transparent; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: 700; color: var(--text-light); cursor: pointer; transition: 0.3s; }
         .main-mode-toggle button.active { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
-        .status-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px 10px; border-radius: 12px; display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; gap: 5px; }
+        .status-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px 10px; border-radius: 12px; display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; gap: 5px; transition: 0.3s; }
+        
+        /* 🎯 암기 모드일 때 가운데 정렬을 위한 스타일 */
+        .status-box.memo-mode { grid-template-columns: 1fr; }
+        .status-box.memo-mode .status-item::after { display: none; }
+
         .status-item { position: relative; }
         .status-item:not(:last-child)::after { content: ''; position: absolute; right: 0; top: 20%; height: 60%; width: 1px; background: #e2e8f0; }
         .status-item .num { font-size: 18px; font-weight: 700; color: var(--primary); }
@@ -48,9 +52,6 @@
         .range-apply-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; }
         .range-apply-btn:hover { background: #0f233f; }
 
-        .reset-btn { background: #f1f5f9; color: var(--text-light); border: none; padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
-        .reset-btn:hover { background: #e2e8f0; color: var(--danger); }
-        
         .mode-buttons { display: flex; flex-direction: column; gap: 10px; }
         .action-buttons { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
 
@@ -65,6 +66,11 @@
         .note-btn { background: #475569; }
         .note-btn:hover { background: #334155; }
         
+        /* 🎯 맨 아래에 배치되는 초기화 버튼 박스 */
+        .bottom-reset-box { margin-top: 10px; padding-top: 15px; border-top: 1px dashed #cbd5e1; }
+        .reset-btn { width: 100%; background: var(--danger-bg); color: var(--danger); border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .reset-btn:hover { background: #fecdd3; }
+
         .main-stage { background: var(--card-bg); border-radius: 20px; padding: 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; display: flex; flex-direction: column; justify-content: center; min-height: 450px; position: relative; }
         #question-display { font-size: 44px; font-weight: 700; margin-bottom: 15px; color: var(--primary); word-break: keep-all; }
         #answer-reveal { font-size: 22px; color: var(--danger); height: 35px; margin-bottom: 30px; opacity: 0; transition: opacity 0.3s; font-weight: 600; }
@@ -163,7 +169,7 @@
                 <button id="main-memo-btn" onclick="setMainMode('memorize')">암기 모드</button>
             </div>
 
-            <div class="status-box">
+            <div class="status-box" id="status-box">
                 <div class="status-item"><div class="num" id="solved-count">0</div><div class="label">현재 진행</div></div>
                 <div class="status-item" id="col-correct"><div class="num" id="correct-count">0</div><div class="label">정답 수</div></div>
                 <div class="status-item" id="col-wrong"><div class="num" id="wrong-count">0</div><div class="label">오답 수</div></div>
@@ -194,6 +200,10 @@
             <div class="action-buttons">
                 <button class="action-btn note-btn" onclick="openNoteModal()"><i class="fa-solid fa-book-open"></i> <span id="note-btn-text">오답 노트 보기</span></button>
                 <button class="action-btn" onclick="openAllModal()"><i class="fa-solid fa-list"></i> 전체 검색</button>
+            </div>
+
+            <div class="bottom-reset-box">
+                <button class="reset-btn" onclick="resetProgress()"><i class="fa-solid fa-rotate-right"></i> 진행도 전체 초기화</button>
             </div>
         </div>
 
@@ -240,9 +250,9 @@
                 <span class="close-modal" onclick="closeModal('note-modal')">&times;</span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                <p style="color: var(--text-light); margin: 0; font-size: 13px;" id="note-modal-desc">현재 누적된 단어입니다. 복습 모드에서 제거하거나 'x'를 눌러 지울 수 있습니다.</p>
+                <p style="color: var(--text-light); margin: 0; font-size: 13px;" id="note-modal-desc">현재 누적된 오답입니다. 복습 모드에서 맞추거나 'x'를 눌러 지울 수 있습니다.</p>
                 <div style="display: flex;">
-                    <button class="download-btn" onclick="downloadNoteTxt()"><i class="fa-solid fa-download"></i> TXT 다운로드</button>
+                    <button class="download-btn" onclick="downloadNoteTxt()"><i class="fa-solid fa-download"></i> 목록 다운로드</button>
                     <button class="trash-btn" onclick="clearNoteList()"><i class="fa-solid fa-trash"></i> 전체 비우기</button>
                 </div>
             </div>
@@ -287,7 +297,7 @@
             {id: 129, en: "invasion", ko: "침공"}, {id: 130, en: "fall into the hands of", ko: "~의 손에 들어가다"}, {id: 131, en: "oppose", ko: "반대하다"}, {id: 132, en: "equipment", ko: "장비"},
             {id: 133, en: "export", ko: "수출하다"}, {id: 134, en: "depict", ko: "묘사하다"}, {id: 135, en: "stereotyped", ko: "정형화된"}, {id: 136, en: "elaborate", ko: "정교한, 복잡한"},
             {id: 137, en: "conduct", ko: "행동, 행위, 수행하다"}, {id: 138, en: "flexibility", ko: "유연성"}, {id: 139, en: "spatial", ko: "공간의"}, {id: 140, en: "timely", ko: "시기적절하게"},
-            {id: 141, en: "exclusive", ko: "전용의, 독점적인"}, {id: 142, en: "fundamental", ko: "매 매우 중요한, 근본적인"}, {id: 143, en: "representation", ko: "표상, 개념, 작용"}, {id: 144, en: "term", ko: "일컫다"},
+            {id: 141, en: "exclusive", ko: "전용의, 독점적인"}, {id: 142, en: "fundamental", ko: "매우 중요한, 근본적인"}, {id: 143, en: "representation", ko: "표상, 개념, 작용"}, {id: 144, en: "term", ko: "일컫다"},
             {id: 145, en: "critically", ko: "결정적으로"}, {id: 146, en: "counterpart", ko: "상응하는 존재, 대응물"}, {id: 147, en: "verbally", ko: "언어로, 구두로"}, {id: 148, en: "minority", ko: "소수 집단"},
             {id: 149, en: "maintain", ko: "유지하다, 주장하다"}, {id: 150, en: "consistently", ko: "일관되게, 지속적으로"}, {id: 151, en: "persuasive", ko: "설득력 있는"}, {id: 152, en: "geographically", ko: "지리적으로"},
             {id: 153, en: "advocate", ko: "주창자, 옹호자"}, {id: 154, en: "alternative", ko: "대안"}, {id: 155, en: "mainstream", ko: "주류"}, {id: 156, en: "escalate", ko: "확대되다"},
@@ -334,20 +344,14 @@
             {id: 317, en: "degraded", ko: "훼손된, 퇴화한"}, {id: 318, en: "dim", ko: "희미한, 흐릿한"}, {id: 319, en: "fiction", ko: "허구"}, {id: 320, en: "distortion", ko: "왜곡"}
         ];
 
-        // 🎯 1. 모드 및 상태 관리 변수들
-        let mainMode = 'quiz'; // 'quiz' or 'memorize'
+        let mainMode = 'quiz';
         let currentMode = 'mixed'; 
         let currentWordData = null; 
         let remainingWords = []; 
-        
-        // 노트(오답/못외운) 데이터 완전 분리
         let quizIncorrectWords = [];
         let memoIncorrectWords = [];
-        
         let correctCount = 0; let wrongCount = 0; let hasSeenAnswer = false;
-        
-        let currentStartId = 1;
-        let currentEndId = vocabData.length;
+        let currentStartId = 1; let currentEndId = vocabData.length;
         let confirmCallback = null;
 
         window.onload = () => {
@@ -358,46 +362,32 @@
             fetchWord();
         };
 
-        // 🎯 2. 메인 모드 (문제 / 암기) 전환
+        // 🎯 모드 전환: 진행도를 초기화하지 않고 부드럽게 UI만 갱신
         function setMainMode(mode) {
             if (mainMode === mode) return;
 
-            const switchMain = () => {
-                mainMode = mode;
-                
-                // 버튼 스타일
-                document.getElementById('main-quiz-btn').classList.toggle('active', mode === 'quiz');
-                document.getElementById('main-memo-btn').classList.toggle('active', mode === 'memorize');
+            mainMode = mode;
+            document.getElementById('main-quiz-btn').classList.toggle('active', mode === 'quiz');
+            document.getElementById('main-memo-btn').classList.toggle('active', mode === 'memorize');
 
-                // UI 숨김/보임 처리
-                const isQuiz = mode === 'quiz';
-                document.getElementById('col-correct').style.display = isQuiz ? 'block' : 'none';
-                document.getElementById('col-wrong').style.display = isQuiz ? 'block' : 'none';
-                
-                document.getElementById('quiz-input-group').style.display = isQuiz ? 'flex' : 'none';
-                document.getElementById('hint-btn').style.display = isQuiz ? 'block' : 'none';
-                
-                document.getElementById('memo-action-group').style.display = isQuiz ? 'none' : 'flex';
-                
-                // 모드 바꾸면 항상 '섞어서'로 초기화
-                currentMode = 'mixed';
-                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-                document.getElementById('btn-mixed').classList.add('active');
+            const isQuiz = mode === 'quiz';
+            document.getElementById('col-correct').style.display = isQuiz ? 'block' : 'none';
+            document.getElementById('col-wrong').style.display = isQuiz ? 'block' : 'none';
+            
+            // 암기모드일 때 status-box를 1fr로 변경해 가운데 정렬
+            const statusBox = document.getElementById('status-box');
+            if(isQuiz) statusBox.classList.remove('memo-mode');
+            else statusBox.classList.add('memo-mode');
+            
+            applyDynamicTexts();
+            updateScoreboard();
 
-                correctCount = 0; wrongCount = 0;
-                applyDynamicTexts();
-                initPool();
-                fetchWord();
-            };
-
-            if ((correctCount + wrongCount) > 0) {
-                showConfirm("진행도가 초기화됩니다. 변경하시겠습니까?", switchMain);
-            } else {
-                switchMain();
+            // 현재 출제된 단어를 새로운 모드의 UI로 그대로 표시
+            if (currentWordData) {
+                displayQuestionUI(currentWordData);
             }
         }
 
-        // 🎯 3. 동적 텍스트 적용
         function applyDynamicTexts() {
             if (mainMode === 'quiz') {
                 document.getElementById('btn-mixed-text').innerText = '섞어서 맞추기';
@@ -420,7 +410,6 @@
             }
         }
 
-        // 🎯 4. 암기 모드 전용 액션 함수들
         function showMemoMeaning() {
             const reveal = document.getElementById('answer-reveal');
             reveal.innerText = `뜻: ${currentWordData.answer}`;
@@ -429,7 +418,6 @@
             document.getElementById('memo-state-1').style.display = 'none';
             document.getElementById('memo-state-2').style.display = 'flex';
             
-            // 복습 모드일 땐 추가 버튼 디자인 변경
             if(currentMode === 'retest') {
                 document.getElementById('memo-add-btn').innerText = '여전히 못 외움 (유지)';
             } else {
@@ -457,17 +445,15 @@
         }
 
         function nextMemoWord() {
-            // 복습 모드에서 넘어갈 때는 암기했다고 간주하여 배열에서 제거 (하지만 추가버튼 누르면 남아있음)
             if (currentMode === 'retest') {
                 memoIncorrectWords = memoIncorrectWords.filter(w => w.id !== currentWordData.id);
                 showNotification("암기 완료! 노트에서 지워졌습니다.", "success");
             }
-            correctCount++; // 암기모드에선 본 단어 수로 활용
+            correctCount++; 
             updateScoreboard();
             fetchWord();
         }
 
-        // 🎯 5. 공통 시스템 (알림/확인창/키보드스크롤)
         document.getElementById('user-answer').addEventListener('focus', function() {
             setTimeout(() => { this.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300);
         });
@@ -490,7 +476,6 @@
             setTimeout(() => { toast.classList.remove('show'); }, 2000);
         }
 
-        // 🎯 6. 범위 설정 및 풀 갱신
         function applyRange() {
             const startInput = parseInt(document.getElementById('range-start').value);
             const endInput = parseInt(document.getElementById('range-end').value);
@@ -535,7 +520,6 @@
             document.getElementById('remain-count').innerText = remainingWords.length;
         }
 
-        // 🎯 7. 초기화, 모드 전환
         function resetProgress() {
             const list = mainMode === 'quiz' ? quizIncorrectWords : memoIncorrectWords;
             if (correctCount + wrongCount === 0 && list.length === 0) {
@@ -552,6 +536,7 @@
             });
         }
 
+        // 🎯 모드(섞어서/한국어/영어 등) 전환: 진행도 초기화 없음
         function setMode(mode, btnId) {
             if (currentMode === mode) return;
             const currentNoteList = mainMode === 'quiz' ? quizIncorrectWords : memoIncorrectWords;
@@ -559,18 +544,12 @@
                 showNotification("현재 저장된 단어가 없습니다.\n일반 모드를 진행해주세요.", "error"); return;
             }
 
-            const switchAction = () => {
-                currentMode = mode; correctCount = 0; wrongCount = 0; 
-                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-                document.getElementById(btnId).classList.add('active'); 
-                initPool(); fetchWord();
-            };
-
-            if ((correctCount + wrongCount) > 0) {
-                showConfirm("경고: 모드를 변경하면 현재 [진행 카운트]가 초기화됩니다.\n(※ 노트는 유지됨)\n변경하시겠습니까?", switchAction);
-            } else {
-                switchAction();
-            }
+            currentMode = mode; 
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(btnId).classList.add('active'); 
+            
+            initPool(); 
+            fetchWord();
         }
 
         function displayQuestionUI(data) {
@@ -586,8 +565,12 @@
             if (mainMode === 'quiz') {
                 document.getElementById('quiz-input-group').style.display = 'flex';
                 document.getElementById('hint-btn').style.display = 'block';
+                document.getElementById('memo-action-group').style.display = 'none';
                 if(window.innerWidth > 768) document.getElementById('user-answer').focus();
             } else {
+                document.getElementById('quiz-input-group').style.display = 'none';
+                document.getElementById('hint-btn').style.display = 'none';
+                document.getElementById('memo-action-group').style.display = 'flex';
                 document.getElementById('memo-state-1').style.display = 'block';
                 document.getElementById('memo-state-2').style.display = 'none';
             }
@@ -626,7 +609,6 @@
             displayQuestionUI({ id: word.id, en: word.en, ko: word.ko, question: q, answer: a });
         }
 
-        // 🎯 8. 문제 맞추기(Quiz) 전용 채점 로직
         function handleWrongAnswer(userInput) {
             wrongCount++;
             if (!quizIncorrectWords.find(w => w.id === currentWordData.id)) {
@@ -664,7 +646,6 @@
         function handleKey(e) { if (e.key === 'Enter') checkAnswer(); }
         function showAnswer() { if (hasSeenAnswer) return; hasSeenAnswer = true; handleWrongAnswer(null); }
 
-        // 🎯 9. 노트 관리 (삭제, 비우기, TXT 다운로드)
         function clearNoteList() {
             const list = mainMode === 'quiz' ? quizIncorrectWords : memoIncorrectWords;
             if (list.length === 0) { showNotification("비울 노트가 없습니다.", "error"); return; }
@@ -704,8 +685,8 @@
             const list = mainMode === 'quiz' ? quizIncorrectWords : memoIncorrectWords;
             if (list.length === 0) { showNotification("다운로드할 데이터가 없습니다.", "error"); return; }
             
-            let content = "번호\t영단어\t뜻\n";
-            content += list.map(w => `${w.id}\t${w.en}\t${w.ko}`).join("\n");
+            let content = "";
+            content += list.map(w => `${w.id}:${w.en}:${w.ko}`).join("\n");
             
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
