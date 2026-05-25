@@ -142,7 +142,7 @@
             .mode-btn { font-size: 13px; padding: 12px 8px; justify-content: center; text-align: center; gap: 6px; }
             .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
             .action-btn { font-size: 13px; padding: 12px 8px; }
-            .main-stage { padding: 30px 20px 80px 20px; min-height: 400px; } /* 하단 공간 확보 */
+            .main-stage { padding: 30px 20px 80px 20px; min-height: 400px; }
             #question-display { font-size: 32px; margin-bottom: 10px; }
             #answer-reveal { font-size: 18px; margin-bottom: 20px; }
             .quiz-input-group { flex-direction: column; gap: 10px; }
@@ -358,7 +358,6 @@
         let mainMode = 'quiz';
         let currentStartId = 1; let currentEndId = vocabData.length;
         
-        // 🎯 퀴즈와 암기 모드의 상태를 완전히 분리
         const appState = {
             quiz: { remaining: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'random' },
             memorize: { remaining: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'random' }
@@ -369,7 +368,6 @@
         let hasSeenAnswer = false;
         let confirmCallback = null;
 
-        // 현재 선택된 모드의 State 반환 함수
         function getState() { return appState[mainMode]; }
 
         window.onload = () => {
@@ -399,7 +397,6 @@
             applyDynamicTexts();
             updateScoreboard();
 
-            // 분리된 상태를 기반으로 UI 복구
             const state = getState();
             if (state.currentWord) {
                 displayQuestionUI(state.currentWord);
@@ -548,7 +545,6 @@
                 state.remaining = vocabData.filter(w => w.id >= currentStartId && w.id <= currentEndId);
             }
 
-            // 순서 모드 정렬 로직 적용
             if (state.seqMode === 'seq') {
                 state.remaining.sort((a, b) => a.id - b.id);
             }
@@ -574,32 +570,30 @@
                 document.getElementById('total-count').innerText = (currentEndId - currentStartId + 1);
             }
 
-            // Type (문제/암기 형식) 버튼 활성화 UI
             document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`btn-${state.typeMode}`).classList.add('active');
 
-            // Sequence 버튼 활성화 UI
             document.getElementById('seq-btn-seq').classList.toggle('active', state.seqMode === 'seq');
             document.getElementById('seq-btn-rand').classList.toggle('active', state.seqMode === 'random');
         }
 
+        /* 변경됨: 진행도 전체 초기화 로직 수정 (노트는 유지) */
         function resetProgress() {
             const state = getState();
-            const list = mainMode === 'quiz' ? quizIncorrectWords : memoIncorrectWords;
-            if (state.correct + state.wrong === 0 && list.length === 0) {
-                showNotification("초기화할 데이터가 없습니다.", "error"); return;
+            if (state.correct + state.wrong === 0) {
+                showNotification("초기화할 진행도가 없습니다.", "error"); return;
             }
-            showConfirm("정말 학습 카운트와 노트를\n모두 완전히 초기화하시겠습니까?", () => {
-                state.correct = 0; state.wrong = 0; state.currentWord = null;
-                if (mainMode === 'quiz') quizIncorrectWords = [];
-                else memoIncorrectWords = [];
-                
-                if(state.typeMode === 'retest') setMode('mixed');
-                else { initPool(mainMode); fetchWord(); }
-                showNotification("모든 기록이 깔끔하게 초기화되었습니다.");
+            showConfirm("현재 진행도를 초기화하시겠습니까?\n(※ 오답 및 못외운 단어 노트는 유지됩니다)", () => {
+                state.correct = 0; 
+                state.wrong = 0; 
+                state.currentWord = null;
+                initPool(mainMode);
+                fetchWord();
+                showNotification("진행도가 초기화되었습니다.");
             });
         }
 
+        /* 변경됨: 모드 변경 시 진행도 초기화 반영 */
         function setMode(mode) {
             const state = getState();
             if (state.typeMode === mode) return;
@@ -608,9 +602,15 @@
                 showNotification("현재 저장된 단어가 없습니다.\n일반 모드를 진행해주세요.", "error"); return;
             }
 
-            state.typeMode = mode; 
-            initPool(mainMode); 
-            fetchWord();
+            showConfirm("학습 방식을 변경하면 현재 진행도가 초기화됩니다.\n계속하시겠습니까?", () => {
+                state.correct = 0;
+                state.wrong = 0;
+                state.currentWord = null;
+                state.typeMode = mode; 
+                initPool(mainMode); 
+                fetchWord();
+                showNotification("학습 방식이 변경되었습니다.");
+            });
         }
 
         function displayQuestionUI(data) {
@@ -657,7 +657,6 @@
             }
 
             let nextWord;
-            // 순서 모드에 맞춰 단어 추출
             if (state.seqMode === 'seq') {
                 nextWord = state.remaining.shift();
             } else {
