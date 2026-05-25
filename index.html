@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>영단어 연습기</title>
+    <title>영단어 학습기</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -86,7 +86,6 @@
         td { padding: 12px 15px; border-bottom: 1px solid #edf2f7; }
         .close-modal { cursor: pointer; font-size: 24px; color: var(--text-light); }
 
-        /* 🎯 커스텀 HTML 경고창 디자인 */
         .confirm-box { background: white; width: 320px; border-radius: 16px; padding: 25px; text-align: center; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); animation: pop 0.3s ease; }
         .confirm-msg { font-size: 15px; color: var(--text-main); word-break: keep-all; line-height: 1.5; white-space: pre-wrap; font-weight: 600; }
         .confirm-btns { display: flex; gap: 10px; }
@@ -97,8 +96,15 @@
         .btn-confirm:hover { background: #0f233f; }
         @keyframes pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
+        .trash-btn { background: var(--danger-bg); color: var(--danger); border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
+        .trash-btn:hover { background: #fecdd3; }
+
+        /* 🎯 개별 삭제 버튼 스타일 추가 */
+        .item-delete-btn { background: transparent; color: #cbd5e1; border: none; cursor: pointer; padding: 5px; font-size: 16px; transition: color 0.2s; }
+        .item-delete-btn:hover { color: var(--danger); }
+
         @media (max-width: 768px) {
-            body { align-items: flex-start; padding-bottom: 30vh; } /* 가상키보드 공간 확보 */
+            body { align-items: flex-start; padding-bottom: 30vh; } 
             .dashboard { grid-template-columns: 1fr; gap: 15px; margin: 15px 0; }
             .sidebar { padding: 20px; gap: 12px; }
             .sidebar h1 { font-size: 20px; }
@@ -136,7 +142,7 @@
 
     <div class="dashboard">
         <div class="sidebar">
-            <h1>영단어 앱</h1>
+            <h1> 영단어 앱</h1>
             <div class="status-box">
                 <div class="status-item"><div class="num" id="solved-count">0</div><div class="label">현재 진행</div></div>
                 <div class="status-item"><div class="num" id="correct-count">0</div><div class="label">정답 수</div></div>
@@ -149,20 +155,20 @@
             </div>
 
             <div class="range-box">
-                <label>출제 범위 설정</label>
+                <label>📌 출제 범위 설정</label>
                 <div class="range-inputs">
                     <input type="number" id="range-start" value="1" min="1" max="320">
                     <span>~</span>
                     <input type="number" id="range-end" value="320" min="1" max="320">
                 </div>
-                <button class="range-apply-btn" onclick="applyRange()">해당 범위 적용</button>
+                <button class="range-apply-btn" onclick="applyRange()">해당 범위 적용 및 초기화</button>
             </div>
             
             <div class="mode-buttons">
                 <button class="mode-btn active" id="btn-mixed" onclick="setMode('mixed', 'btn-mixed')"><i class="fa-solid fa-shuffle"></i> 섞어서 암기</button>
                 <button class="mode-btn" id="btn-ko" onclick="setMode('ko', 'btn-ko')"><i class="fa-solid fa-language"></i> 한국어 맞추기</button>
                 <button class="mode-btn" id="btn-en" onclick="setMode('en', 'btn-en')"><i class="fa-solid fa-spell-check"></i> 영어 맞추기</button>
-                <button class="mode-btn" id="btn-retest" onclick="setMode('retest', 'btn-retest')"><i class="fa-solid fa-fire"></i> 오답 다시 볼기 <span class="badge" id="retest-badge">0</span></button>
+                <button class="mode-btn" id="btn-retest" onclick="setMode('retest', 'btn-retest')"><i class="fa-solid fa-fire"></i> 오답 다시 풀기 <span class="badge" id="retest-badge">0</span></button>
             </div>
 
             <div class="action-buttons">
@@ -195,9 +201,15 @@
 
     <div class="modal-overlay" id="note-modal">
         <div class="modal-content">
-            <div class="modal-header"><h2 style="margin:0; font-size: 18px; color: var(--danger);"><i class="fa-solid fa-book-open"></i> 오답 노트</h2><span class="close-modal" onclick="closeModal('note-modal')">&times;</span></div>
-            <p style="color: var(--text-light); margin-top: 0; font-size: 13px;">현재 누적된 오답입니다. 복습 모드에서 맞추면 지워집니다.</p>
-            <div class="table-container"><table><thead><tr><th>No</th><th>영단어</th><th>뜻</th></tr></thead><tbody id="note-list-body"></tbody></table></div>
+            <div class="modal-header">
+                <h2 style="margin:0; font-size: 18px; color: var(--danger);"><i class="fa-solid fa-book-open"></i> 오답 노트</h2>
+                <span class="close-modal" onclick="closeModal('note-modal')">&times;</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <p style="color: var(--text-light); margin: 0; font-size: 13px;">현재 누적된 오답입니다. 복습 모드에서 맞추거나 'x'를 눌러 지울 수 있습니다.</p>
+                <button class="trash-btn" onclick="clearNoteList()"><i class="fa-solid fa-trash"></i> 전체 비우기</button>
+            </div>
+            <div class="table-container"><table><thead><tr><th>No</th><th>영단어</th><th>뜻</th><th style="width: 40px; text-align: center;">관리</th></tr></thead><tbody id="note-list-body"></tbody></table></div>
         </div>
     </div>
 
@@ -292,11 +304,9 @@
         
         let correctCount = 0; let wrongCount = 0; let hasSeenAnswer = false;
         
-        // 출제 범위 변수
         let currentStartId = 1;
         let currentEndId = vocabData.length;
 
-        // 커스텀 Confirm창 로직
         let confirmCallback = null;
         function showConfirm(message, callback) {
             document.getElementById('confirm-msg').innerText = message;
@@ -311,12 +321,11 @@
 
         window.onload = () => {
             document.getElementById('range-end').value = vocabData.length;
-            renderTable('word-list-body', vocabData);
+            renderTable('word-list-body', vocabData, false);
             initPool();
             fetchWord();
         };
 
-        // 모바일 키보드 가림 현상 방지
         document.getElementById('user-answer').addEventListener('focus', function() {
             setTimeout(() => {
                 this.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -347,7 +356,6 @@
             });
         }
 
-        // 일반 모드일 때만 풀을 초기화 (오답 모드는 오답 배열을 직접 사용)
         function initPool() {
             if (currentMode !== 'retest') {
                 remainingWords = vocabData.filter(w => w.id >= currentStartId && w.id <= currentEndId);
@@ -395,6 +403,40 @@
             });
         }
 
+        function clearNoteList() {
+            if (incorrectWords.length === 0) {
+                showNotification("비울 오답 노트가 없습니다.", "error");
+                return;
+            }
+            showConfirm("오답 노트의 모든 단어를 삭제하시겠습니까?\n(※ 진행 중인 일반 학습 카운트는 유지됩니다)", () => {
+                incorrectWords = [];
+                updateScoreboard();
+                renderTable('note-list-body', incorrectWords, true); 
+                
+                if (currentMode === 'retest') {
+                    document.getElementById('btn-mixed').click();
+                    closeModal('note-modal'); 
+                }
+                showNotification("오답 노트가 완전히 비워졌습니다.");
+            });
+        }
+
+        // 🎯 개별 삭제 함수 추가
+        function removeWordFromNote(id) {
+            showConfirm("이 단어를 오답 노트에서 삭제하시겠습니까?", () => {
+                incorrectWords = incorrectWords.filter(w => w.id !== id);
+                updateScoreboard();
+                renderTable('note-list-body', incorrectWords, true);
+                showNotification("해당 단어가 삭제되었습니다.");
+                
+                // 삭제 후 오답노트가 비어있고, 현재 복습 모드라면 모드 변경
+                if (currentMode === 'retest' && incorrectWords.length === 0) {
+                    document.getElementById('btn-mixed').click();
+                    closeModal('note-modal'); 
+                }
+            });
+        }
+
         function setMode(mode, btnId) {
             if (currentMode === mode) return;
             if (mode === 'retest' && incorrectWords.length === 0) {
@@ -429,13 +471,11 @@
             document.getElementById('hint-btn').style.display = 'block';
             document.getElementById('next-btn').style.display = 'none';
 
-            // 모바일이 아닐때만 자동 포커스
             if(window.innerWidth > 768) {
                 document.getElementById('user-answer').focus();
             }
         }
 
-        // 오답 모드와 일반 모드의 출제 로직 분리
         function fetchWord() {
             let word;
             let q, a;
@@ -446,7 +486,6 @@
                     document.getElementById('btn-mixed').click();
                     return;
                 }
-                // 오답 노트 배열에서 랜덤 출제 (배열에서 제거 안함 - 맞췄을 때 제거)
                 const randomIndex = Math.floor(Math.random() * incorrectWords.length);
                 word = incorrectWords[randomIndex];
             } else {
@@ -461,7 +500,6 @@
                 }
                 const randomIndex = Math.floor(Math.random() * remainingWords.length);
                 word = remainingWords[randomIndex];
-                // 일반 모드는 출제 즉시 풀(pool)에서 차감
                 remainingWords.splice(randomIndex, 1);
             }
             
@@ -478,9 +516,7 @@
 
         function handleWrongAnswer(userInput) {
             wrongCount++;
-            // 오답시 오답노트에 추가
             if (!incorrectWords.find(w => w.id === currentWordData.id)) {
-                // 원본 단어 데이터(id, en, ko)만 저장
                 incorrectWords.push({id: currentWordData.id, en: currentWordData.en, ko: currentWordData.ko});
             }
             updateScoreboard();
@@ -498,7 +534,6 @@
             const isCorrect = (userInput === cleanCorrectAnswer) || acceptableAnswers.includes(userInput);
 
             if (isCorrect) {
-                // 오답 모드에서 정답 맞추면 리스트에서 완벽 제거
                 if (currentMode === 'retest') {
                     incorrectWords = incorrectWords.filter(w => w.id !== currentWordData.id);
                     showNotification("✅ 완벽합니다! 오답 노트에서 제거되었습니다.", "success");
@@ -515,22 +550,31 @@
         function handleKey(e) { if (e.key === 'Enter') checkAnswer(); }
         function showAnswer() { if (hasSeenAnswer) return; hasSeenAnswer = true; handleWrongAnswer(null); }
 
-        function renderTable(tbodyId, data) {
+        // 🎯 테이블 렌더링 함수 업데이트 (isNoteList 매개변수 추가로 삭제버튼 열 구분)
+        function renderTable(tbodyId, data, isNoteList = false) {
             const body = document.getElementById(tbodyId);
             if (data.length === 0) {
-                body.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 30px; color:#999;">데이터가 없습니다.</td></tr>`; return;
+                body.innerHTML = `<tr><td colspan="${isNoteList ? 4 : 3}" style="text-align:center; padding: 30px; color:#999;">데이터가 없습니다.</td></tr>`; 
+                return;
             }
-            body.innerHTML = data.map(w => `<tr><td>${w.id}</td><td style="font-weight:600; color:#1a365d;">${w.en}</td><td>${w.ko}</td></tr>`).join('');
+            body.innerHTML = data.map(w => `
+                <tr>
+                    <td>${w.id}</td>
+                    <td style="font-weight:600; color:#1a365d;">${w.en}</td>
+                    <td>${w.ko}</td>
+                    ${isNoteList ? `<td style="text-align:center;"><button class="item-delete-btn" onclick="removeWordFromNote(${w.id})" title="단어 삭제"><i class="fa-solid fa-xmark"></i></button></td>` : ''}
+                </tr>
+            `).join('');
         }
 
         function filterWords() {
             const query = document.getElementById('search-input').value.toLowerCase();
             const filtered = vocabData.filter(w => w.en.toLowerCase().includes(query) || w.ko.toLowerCase().includes(query));
-            renderTable('word-list-body', filtered);
+            renderTable('word-list-body', filtered, false);
         }
 
         function openAllModal() { document.getElementById('all-modal').style.display = 'flex'; }
-        function openNoteModal() { renderTable('note-list-body', incorrectWords); document.getElementById('note-modal').style.display = 'flex'; }
+        function openNoteModal() { renderTable('note-list-body', incorrectWords, true); document.getElementById('note-modal').style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     </script>
 </body>
