@@ -195,16 +195,16 @@
             </div>
             
             <div class="total-info">
-                남은 단어: <span id="remain-count" style="font-weight:700; color:var(--primary);">320</span> 
-                / 출제 범위: <span id="total-count">320</span>
+                남은 단어: <span id="remain-count" style="font-weight:700; color:var(--primary);">로딩중...</span> 
+                / 출제 범위: <span id="total-count">로딩중...</span>
             </div>
 
             <div class="range-box">
                 <label id="range-label-text">📌 출제 범위 설정</label>
                 <div class="range-inputs">
-                    <input type="number" id="range-start" value="1" min="1" max="320">
+                    <input type="number" id="range-start" min="1">
                     <span>~</span>
-                    <input type="number" id="range-end" value="320" min="1" max="320">
+                    <input type="number" id="range-end" min="1">
                 </div>
                 <button class="range-apply-btn" onclick="applyRange()">해당 범위 적용 및 초기화</button>
             </div>
@@ -372,9 +372,12 @@
 
         let mainMode = 'quiz';
         
+        // vocabData의 마지막 요소를 찾아 id값을 가져옴
+        const lastVocabId = vocabData[vocabData.length - 1].id;
+
         const appState = {
-            quiz: { remaining: [], history: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'seq', startId: 1, endId: vocabData.length },
-            memorize: { remaining: [], history: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'seq', startId: 1, endId: vocabData.length }
+            quiz: { remaining: [], history: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'seq', startId: 1, endId: lastVocabId },
+            memorize: { remaining: [], history: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'seq', startId: 1, endId: lastVocabId }
         };
 
         let quizIncorrectWords = [];
@@ -385,9 +388,14 @@
         function getState() { return appState[mainMode]; }
 
         window.onload = () => {
+            // max 속성을 데이터의 마지막 id로 자동 설정
+            document.getElementById('range-start').max = lastVocabId;
+            document.getElementById('range-end').max = lastVocabId;
+            
             const state = getState();
             document.getElementById('range-start').value = state.startId;
             document.getElementById('range-end').value = state.endId;
+            
             renderTable('word-list-body', vocabData, false);
             applyDynamicTexts();
             initPool('quiz');
@@ -460,7 +468,7 @@
                 document.getElementById('note-btn-text').innerText = '못외운 단어 노트 보기';
                 document.getElementById('range-label-text').innerText = '📌 암기 범위 설정';
                 document.getElementById('note-modal-title').innerText = '못외운 단어 노트';
-                document.getElementById('note-modal-desc').innerText = '누적된 못외운 단어입니다. 복습 모드에서 완료하거나 \'x\'를 눌러 지울 수 있습니다.';
+                document.getElementById('note-modal-desc').innerText = '누적된 못외운 단어입니다. 복습 모드에서 완료하거나 \'x\'를 눌러 지울 수 단 있습니다.';
             }
         }
 
@@ -539,8 +547,9 @@
             const startInput = parseInt(document.getElementById('range-start').value);
             const endInput = parseInt(document.getElementById('range-end').value);
 
-            if (isNaN(startInput) || isNaN(endInput) || startInput < 1 || endInput > vocabData.length || startInput > endInput) {
-                showNotification(`올바른 범위를 입력해주세요. (1 ~ ${vocabData.length})`, "error"); return;
+            // 입력값이 동적으로 계산된 lastVocabId를 넘지 못하도록 검사
+            if (isNaN(startInput) || isNaN(endInput) || startInput < 1 || endInput > lastVocabId || startInput > endInput) {
+                showNotification(`올바른 범위를 입력해주세요. (1 ~ ${lastVocabId})`, "error"); return;
             }
             showConfirm(`현재 모드의 범위를 ${startInput}번부터 ${endInput}번까지로 설정하고\n진행도를 초기화하시겠습니까?\n(※ 노트 기록은 유지됩니다)`, () => {
                 const state = getState();
