@@ -240,8 +240,8 @@
             </div>
 
             <div class="seq-toggle-group" id="seq-toggle-group">
-                <button id="seq-btn-seq" class="seq-toggle-btn" onclick="setSeqMode('seq')"><i class="fa-solid fa-arrow-down-1-9"></i> 순서대로</button>
-                <button id="seq-btn-rand" class="seq-toggle-btn active" onclick="setSeqMode('random')"><i class="fa-solid fa-shuffle"></i> 무작위 순서</button>
+                <button id="seq-btn-seq" class="seq-toggle-btn active" onclick="setSeqMode('seq')"><i class="fa-solid fa-arrow-down-1-9"></i> 순서대로 표시</button>
+                <button id="seq-btn-rand" class="seq-toggle-btn" onclick="setSeqMode('random')"><i class="fa-solid fa-shuffle"></i> 무작위 순서로 표시</button>
             </div>
         </div>
     </div>
@@ -356,11 +356,11 @@
         ];
 
         let mainMode = 'quiz';
-        let currentStartId = 1; let currentEndId = vocabData.length;
         
+        /* seqMode 의 기본값을 'seq' (순서대로) 로 수정했습니다. */
         const appState = {
-            quiz: { remaining: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'random' },
-            memorize: { remaining: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'random' }
+            quiz: { remaining: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'seq', startId: 1, endId: vocabData.length },
+            memorize: { remaining: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'seq', startId: 1, endId: vocabData.length }
         };
 
         let quizIncorrectWords = [];
@@ -371,7 +371,9 @@
         function getState() { return appState[mainMode]; }
 
         window.onload = () => {
-            document.getElementById('range-end').value = vocabData.length;
+            const state = getState();
+            document.getElementById('range-start').value = state.startId;
+            document.getElementById('range-end').value = state.endId;
             renderTable('word-list-body', vocabData, false);
             applyDynamicTexts();
             initPool('quiz');
@@ -394,10 +396,13 @@
             if(isQuiz) statusBox.classList.remove('memo-mode');
             else statusBox.classList.add('memo-mode');
             
+            const state = getState();
+            document.getElementById('range-start').value = state.startId;
+            document.getElementById('range-end').value = state.endId;
+
             applyDynamicTexts();
             updateScoreboard();
 
-            const state = getState();
             if (state.currentWord) {
                 displayQuestionUI(state.currentWord);
             } else {
@@ -406,6 +411,7 @@
             }
         }
 
+        /* 변경됨: 알림 메시지도 버튼 텍스트에 맞춰 다듬었습니다. */
         function setSeqMode(mode) {
             const state = getState();
             if (state.seqMode === mode) return;
@@ -418,7 +424,7 @@
                 
                 initPool(mainMode);
                 fetchWord();
-                showNotification(mode === 'seq' ? "순서대로 출제됩니다." : "무작위 순서로 출제됩니다.");
+                showNotification(mode === 'seq' ? "순서대로 표시됩니다." : "무작위 순서로 표시됩니다.");
             });
         }
 
@@ -518,18 +524,21 @@
             const endInput = parseInt(document.getElementById('range-end').value);
 
             if (isNaN(startInput) || isNaN(endInput) || startInput < 1 || endInput > vocabData.length || startInput > endInput) {
-                showNotification("올바른 범위를 입력해주세요. (1 ~ 320)", "error"); return;
+                showNotification(`올바른 범위를 입력해주세요. (1 ~ ${vocabData.length})`, "error"); return;
             }
-            showConfirm(`범위를 ${startInput}번부터 ${endInput}번까지로 설정하고\n진행도를 초기화하시겠습니까?\n(※ 노트 기록은 유지됩니다)`, () => {
-                currentStartId = startInput; currentEndId = endInput;
+            showConfirm(`현재 모드의 범위를 ${startInput}번부터 ${endInput}번까지로 설정하고\n진행도를 초기화하시겠습니까?\n(※ 노트 기록은 유지됩니다)`, () => {
+                const state = getState();
+                state.startId = startInput;
+                state.endId = endInput;
                 
-                appState.quiz.correct = 0; appState.quiz.wrong = 0; appState.quiz.currentWord = null;
-                appState.memorize.correct = 0; appState.memorize.wrong = 0; appState.memorize.currentWord = null;
+                state.correct = 0; 
+                state.wrong = 0; 
+                state.currentWord = null;
                 
-                if (getState().typeMode === 'retest') {
+                if (state.typeMode === 'retest') {
                     document.getElementById('btn-mixed').click();
                 } else {
-                    initPool('quiz'); initPool('memorize'); fetchWord();
+                    initPool(mainMode); fetchWord();
                 }
                 showNotification(`범위가 ${startInput}번 ~ ${endInput}번으로 설정되었습니다.`);
             });
@@ -542,7 +551,7 @@
             if (state.typeMode === 'retest') {
                 state.remaining = [...currentNoteList];
             } else {
-                state.remaining = vocabData.filter(w => w.id >= currentStartId && w.id <= currentEndId);
+                state.remaining = vocabData.filter(w => w.id >= state.startId && w.id <= state.endId);
             }
 
             if (state.seqMode === 'seq') {
@@ -567,7 +576,7 @@
             if (state.typeMode === 'retest') {
                 document.getElementById('total-count').innerText = currentNoteList.length;
             } else {
-                document.getElementById('total-count').innerText = (currentEndId - currentStartId + 1);
+                document.getElementById('total-count').innerText = (state.endId - state.startId + 1);
             }
 
             document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
@@ -577,7 +586,6 @@
             document.getElementById('seq-btn-rand').classList.toggle('active', state.seqMode === 'random');
         }
 
-        /* 변경됨: 진행도 전체 초기화 로직 수정 (노트는 유지) */
         function resetProgress() {
             const state = getState();
             if (state.correct + state.wrong === 0) {
@@ -593,7 +601,6 @@
             });
         }
 
-        /* 변경됨: 모드 변경 시 진행도 초기화 반영 */
         function setMode(mode) {
             const state = getState();
             if (state.typeMode === mode) return;
