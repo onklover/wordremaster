@@ -14,15 +14,26 @@
             --danger-bg: #ffe4e6; --success: #10b981; --warning: #f59e0b;
         }
 
+        /* 기기 크기별로 테두리 너비 초과를 막는 필수 설정 */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Inter', 'Noto Sans KR', sans-serif; background: var(--bg);
             background-image: linear-gradient(rgba(26, 54, 93, 0.03) 1px, transparent 1px), 
                               linear-gradient(90deg, rgba(26, 54, 93, 0.03) 1px, transparent 1px);
             background-size: 20px 20px; color: var(--text-main); margin: 0;
-            display: flex; justify-content: center; align-items: center; min-height: 100vh;
+            display: flex; flex-direction: column; 
+            min-height: 100dvh; /* 모바일 주소창을 고려한 동적 높이 */
+            padding: 30px 15px;
         }
 
-        .dashboard { width: 1000px; max-width: 95%; display: grid; grid-template-columns: 340px 1fr; gap: 30px; margin: 30px 0; }
+        .dashboard { 
+            width: 100%; max-width: 1000px; 
+            display: grid; grid-template-columns: 320px 1fr; gap: 30px; 
+            margin: auto; /* 화면 여유가 있으면 수직 중앙, 좁으면 상단 정렬 마법 */
+        }
         
         .sidebar { background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 15px; }
         
@@ -47,7 +58,7 @@
         .range-box { background: #edf2f7; padding: 12px; border-radius: 10px; text-align: center; font-size: 14px; }
         .range-box label { font-weight: 600; color: var(--primary); display: block; margin-bottom: 8px; font-size: 13px; }
         .range-inputs { display: flex; align-items: center; justify-content: space-between; gap: 5px; margin-bottom: 8px; }
-        .range-inputs input { flex: 1; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center; font-size: 14px; }
+        .range-inputs input { flex: 1; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: center; font-size: 14px; min-width: 0; }
         .range-apply-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.2s; }
         .range-apply-btn:hover { background: #0f233f; }
 
@@ -100,6 +111,888 @@
 
         /* 공통 이전 버튼 스타일 */
         .btn-prev-action { 
+            display: none; align-items: center; gap: 8px; justify-content: center;
+            background: #94a3b8; color: white; border: none; 
+            padding: 10px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; 
+            transition: 0.2s; width: fit-content; margin: 25px auto 0 auto; font-size: 14px; 
+        }
+        .btn-prev-action:hover { background: #64748b; }
+
+        /* Sequence Toggle Group */
+        .seq-toggle-group { position: absolute; bottom: 30px; left: 0; width: 100%; display: flex; justify-content: center; gap: 10px; }
+        .seq-toggle-btn { display: flex; align-items: center; gap: 8px; background: #e2e8f0; color: var(--text-light); border: none; padding: 10px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 14px; }
+        .seq-toggle-btn:hover { background: #cbd5e1; }
+        .seq-toggle-btn.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        .toast-container { 
+            position: fixed; 
+            top: 15%; /* 데스크탑 기준 위쪽 */
+            left: 50%; 
+            transform: translate(-50%, -50%) scale(0.9); 
+            padding: 16px 30px; 
+            border-radius: 14px; 
+            color: white; 
+            font-weight: 700; 
+            font-size: 17px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+            opacity: 0; 
+            pointer-events: none; 
+            transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.3s; 
+            z-index: 4000; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            gap: 12px; 
+            text-align: center; 
+            width: auto; 
+            white-space: nowrap; 
+        }
+        .toast-container.show { 
+            opacity: 1; 
+            transform: translate(-50%, -50%) scale(1); 
+        }
+        .toast-success { background: var(--success); }
+        .toast-error { background: var(--danger); }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
+        .modal-content { background: white; width: 100%; max-width: 800px; max-height: 85dvh; border-radius: 20px; padding: 30px; overflow: hidden; display: flex; flex-direction: column; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .table-container { overflow-y: auto; border: 1px solid #edf2f7; border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: #f8fafc; padding: 15px; position: sticky; top: 0; color: var(--primary); }
+        td { padding: 12px 15px; border-bottom: 1px solid #edf2f7; }
+        .close-modal { cursor: pointer; font-size: 24px; color: var(--text-light); }
+
+        .confirm-box { background: white; width: 320px; max-width: 95%; border-radius: 16px; padding: 25px; text-align: center; display: flex; flex-direction: column; gap: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); animation: pop 0.3s ease; }
+        .confirm-msg { font-size: 15px; color: var(--text-main); word-break: keep-all; line-height: 1.5; white-space: pre-wrap; font-weight: 600; }
+        .confirm-btns { display: flex; gap: 10px; }
+        .confirm-btns button { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .btn-cancel { background: #e2e8f0; color: var(--text-main); }
+        .btn-cancel:hover { background: #cbd5e1; }
+        .btn-confirm { background: var(--primary); color: white; }
+        .btn-confirm:hover { background: #0f233f; }
+        @keyframes pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        .trash-btn, .download-btn { background: var(--danger-bg); color: var(--danger); border: none; padding: 8px 12px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
+        .trash-btn:hover { background: #fecdd3; }
+        .download-btn { background: #e0e7ff; color: #3730a3; margin-right: 10px; }
+        .download-btn:hover { background: #c7d2fe; }
+        .item-delete-btn { background: transparent; color: #cbd5e1; border: none; cursor: pointer; padding: 5px; font-size: 16px; transition: color 0.2s; }
+        .item-delete-btn:hover { color: var(--danger); }
+
+        /* ======== 반응형 미디어 쿼리 ======== */
+        
+        /* 1. 태블릿 & 작은 데스크탑 */
+        @media (max-width: 850px) {
+            body { padding: 15px 10px; }
+            .dashboard { grid-template-columns: 1fr; gap: 15px; }
+            .sidebar { padding: 25px 20px; gap: 12px; }
+            .mode-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+            .mode-btn { font-size: 13px; padding: 12px 8px; justify-content: center; text-align: center; gap: 6px; }
+            .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
+            .action-btn { font-size: 13px; padding: 12px 8px; }
+            .main-stage { padding: 40px 20px 80px 20px; min-height: 350px; }
+            #question-display { font-size: 36px; margin-bottom: 10px; }
+            #answer-reveal { font-size: 18px; margin-bottom: 20px; }
+            
+            .modal-content { max-height: 75dvh; padding: 20px; }
+            .close-modal { font-size: 28px; padding: 5px; margin-right: -5px; }
+            th, td { padding: 10px; font-size: 14px; }
+        }
+
+        /* 2. 스마트폰 가로/세로 공통 */
+        @media (max-width: 480px) {
+            .status-box { grid-template-columns: repeat(3, 1fr); padding: 10px 5px; }
+            .status-item .num { font-size: 16px; }
+            .range-box { display: flex; flex-direction: column; gap: 5px; padding: 10px; }
+            
+            #question-display { font-size: 30px; }
+            .quiz-input-group { flex-direction: column; gap: 10px; }
+            input[type="text"] { padding: 14px; font-size: 16px; text-align: center; }
+            .btn-check { padding: 15px; width: 100%; border-radius: 10px; }
+            
+            .seq-toggle-group { flex-direction: column; padding: 0 15px; bottom: 20px; gap: 6px; }
+            .seq-toggle-btn { width: 100%; justify-content: center; }
+            .main-stage { padding-bottom: 110px; } 
+        }
+
+        /* 3. 태블릿 & 스마트폰 세로 모드 (토스트 하단에서 위로 팝업) */
+        @media (max-width: 1366px) and (orientation: portrait) {
+            .toast-container { 
+                top: auto; 
+                bottom: 120px; /* 버튼들과 겹치지 않게 하단에 띄움 */
+                transform: translate(-50%, 20px) scale(0.9); 
+                width: 85%; 
+                font-size: 15px; 
+                white-space: normal; 
+                line-height: 1.4; 
+                padding: 14px;
+            }
+            .toast-container.show { 
+                transform: translate(-50%, 0) scale(1); 
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="ui-toast" class="toast-container"></div>
+
+    <div class="modal-overlay" id="custom-confirm" style="z-index: 3000;">
+        <div class="confirm-box">
+            <div class="confirm-msg" id="confirm-msg"></div>
+            <div class="confirm-btns">
+                <button class="btn-cancel" onclick="closeConfirm(false)">취소</button>
+                <button class="btn-confirm" onclick="closeConfirm(true)">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <div class="sidebar">
+            <div class="main-mode-toggle">
+                <button id="main-quiz-btn" class="active" onclick="setMainMode('quiz')">문제 모드</button>
+                <button id="main-memo-btn" onclick="setMainMode('memorize')">암기 모드</button>
+            </div>
+
+            <div class="status-box" id="status-box">
+                <div class="status-item"><div class="num" id="solved-count">0</div><div class="label">현재 진행</div></div>
+                <div class="status-item" id="col-correct"><div class="num" id="correct-count">0</div><div class="label">정답 수</div></div>
+                <div class="status-item" id="col-wrong"><div class="num" id="wrong-count">0</div><div class="label">오답 수</div></div>
+            </div>
+            
+            <div class="total-info">
+                남은 단어: <span id="remain-count" style="font-weight:700; color:var(--primary);">로딩중...</span> 
+                / 출제 범위: <span id="total-count">로딩중...</span>
+            </div>
+
+            <div class="range-box">
+                <label id="range-label-text">📌 출제 범위 설정</label>
+                <div class="range-inputs">
+                    <input type="number" id="range-start" min="1">
+                    <span>~</span>
+                    <input type="number" id="range-end" min="1">
+                </div>
+                <button class="range-apply-btn" onclick="applyRange()">해당 범위 적용 및 초기화</button>
+            </div>
+            
+            <div class="mode-buttons">
+                <button class="mode-btn active" id="btn-mixed" onclick="setMode('mixed')"><i class="fa-solid fa-shuffle"></i> <span id="btn-mixed-text">섞어서 맞추기</span></button>
+                <button class="mode-btn" id="btn-ko" onclick="setMode('ko')"><i class="fa-solid fa-language"></i> <span id="btn-ko-text">한국어 맞추기</span></button>
+                <button class="mode-btn" id="btn-en" onclick="setMode('en')"><i class="fa-solid fa-spell-check"></i> <span id="btn-en-text">영어 맞추기</span></button>
+                <button class="mode-btn" id="btn-retest" onclick="setMode('retest')"><i class="fa-solid fa-fire"></i> <span id="btn-retest-text">오답 다시 풀기</span> <span class="badge" id="retest-badge">0</span></button>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-btn note-btn" onclick="openNoteModal()"><i class="fa-solid fa-book-open"></i> <span id="note-btn-text">오답 노트 보기</span></button>
+                <button class="action-btn" onclick="openAllModal()"><i class="fa-solid fa-list"></i> 전체 검색</button>
+            </div>
+
+            <div class="bottom-reset-box">
+                <button class="reset-btn" onclick="resetProgress()"><i class="fa-solid fa-rotate-right"></i> 진행도 전체 초기화</button>
+            </div>
+        </div>
+
+        <div class="main-stage">
+            <div id="retry-msg" style="display: none;"></div>
+            <div id="question-display">로딩 중...</div>
+            <div id="answer-reveal"></div>
+            
+            <div class="quiz-input-group" id="quiz-input-group">
+                <input type="text" id="user-answer" placeholder="정답을 입력하세요" 
+                       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" 
+                       onkeypress="handleKey(event)">
+                <button class="btn-check" onclick="checkAnswer()">확인</button>
+            </div>
+            <p class="hint-text" id="hint-btn" onclick="showAnswer()">정답이 기억나지 않나요? (오답 처리)</p>
+            <button id="btn-prev-quiz" class="btn-prev-action" onclick="goBack()"><i class="fa-solid fa-rotate-left"></i> 이전 단어</button>
+
+            <div class="memo-action-group" id="memo-action-group">
+                <div id="memo-state-1">
+                    <button class="memo-btn btn-show" onclick="showMemoMeaning()">뜻 보기</button>
+                </div>
+                <div id="memo-state-2" style="display: none; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; gap: 10px;">
+                        <button class="memo-btn btn-add-note" id="memo-add-btn" onclick="addToMemoNote()">노트에 적어놓기</button>
+                        <button class="memo-btn btn-hide" onclick="hideMemoMeaning()">뜻 가리기</button>
+                    </div>
+                    <button class="memo-btn btn-next-memo" onclick="nextMemoWord()">다음 단어로 넘어가기 ➔</button>
+                </div>
+            </div>
+            <button id="btn-prev-memo" class="btn-prev-action" onclick="goBack()"><i class="fa-solid fa-rotate-left"></i> 이전 단어</button>
+
+            <div class="seq-toggle-group" id="seq-toggle-group">
+                <button id="seq-btn-seq" class="seq-toggle-btn active" onclick="setSeqMode('seq')"><i class="fa-solid fa-arrow-down-1-9"></i> 순서대로 표시</button>
+                <button id="seq-btn-rand" class="seq-toggle-btn" onclick="setSeqMode('random')"><i class="fa-solid fa-shuffle"></i> 무작위 순서로 표시</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="all-modal">
+        <div class="modal-content">
+            <div class="modal-header"><h2 style="margin:0; font-size: 18px;">전체 단어 목록</h2><span class="close-modal" onclick="closeModal('all-modal')">&times;</span></div>
+            <input type="text" id="search-input" placeholder="검색어 입력..." style="width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box;" onkeyup="filterWords()">
+            <div class="table-container"><table><thead><tr><th>No</th><th>영단어</th><th>뜻</th></tr></thead><tbody id="word-list-body"></tbody></table></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="note-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin:0; font-size: 18px; color: var(--danger);"><i class="fa-solid fa-book-open"></i> <span id="note-modal-title">오답 노트</span></h2>
+                <span class="close-modal" onclick="closeModal('note-modal')">&times;</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <p style="color: var(--text-light); margin: 0; font-size: 13px;" id="note-modal-desc">현재 누적된 오답입니다. 복습 모드에서 맞추거나 'x'를 눌러 지울 수 있습니다.</p>
+                <div style="display: flex;">
+                    <button class="download-btn" onclick="downloadNoteTxt()"><i class="fa-solid fa-download"></i> 목록 다운로드</button>
+                    <button class="trash-btn" onclick="clearNoteList()"><i class="fa-solid fa-trash"></i> 전체 비우기</button>
+                </div>
+            </div>
+            <div class="table-container"><table><thead><tr><th>No</th><th>영단어</th><th>뜻</th><th style="width: 40px; text-align: center;">관리</th></tr></thead><tbody id="note-list-body"></tbody></table></div>
+        </div>
+    </div>
+
+    <script>
+        const vocabData = [
+            {id: 1, en: "universality", ko: "보편성"}, {id: 2, en: "affect", ko: "정서"}, {id: 3, en: "variable", ko: "변수"}, {id: 4, en: "finite", ko: "유한한"},
+            {id: 5, en: "repertoire", ko: "목록, 레퍼토리, 수행 목록"}, {id: 6, en: "formulation", ko: "체계적 정리, 체계화"}, {id: 7, en: "separable", ko: "분리될 수 있는"}, {id: 8, en: "recognizable", ko: "인식할 수 있는"},
+            {id: 9, en: "derive from", ko: "~로부터 비롯되다"}, {id: 10, en: "posture", ko: "자세"}, {id: 11, en: "carry out", ko: "수행하다"}, {id: 12, en: "transform", ko: "전환시키다"},
+            {id: 13, en: "unconcealed", ko: "숨김없는, 노골적인"}, {id: 14, en: "dynamic", ko: "동적인"}, {id: 15, en: "bubble", ko: "올리다"}, {id: 16, en: "decrease", ko: "단축하다, 줄이다"},
+            {id: 17, en: "reveal", ko: "밝히다, 나타내다, 드러내다"}, {id: 18, en: "relevant", ko: "관련된"}, {id: 19, en: "analysis", ko: "분석"}, {id: 20, en: "log", ko: "기록, 일지"},
+            {id: 21, en: "significantly", ko: "상당히, 유의미하게"}, {id: 22, en: "disrupt", ko: "방해하다, 무너뜨리다, 붕괴시키다"}, {id: 23, en: "cognitive", ko: "인지의, 인지적인"}, {id: 24, en: "operate", ko: "작동하다"},
+            {id: 25, en: "paradigm", ko: "패러다임, 전형적인 예"}, {id: 26, en: "investigate", ko: "연구하다, 조사하다"}, {id: 27, en: "spatial", ko: "공간적인, 공간의"}, {id: 28, en: "visualize", ko: "생생하게 마음속에 그리다, 상상하다"},
+            {id: 29, en: "feature", ko: "특정 요소, 특징"}, {id: 30, en: "instruct", ko: "지시하다"}, {id: 31, en: "critical", ko: "중대한"}, {id: 32, en: "linearly", ko: "선형적으로"},
+            {id: 33, en: "authentic", ko: "진짜의, 진정성 있는"}, {id: 34, en: "manner", ko: "방식"}, {id: 35, en: "continuity", ko: "연속성"}, {id: 36, en: "compute", ko: "계산하다"},
+            {id: 37, en: "sum", ko: "합, 합계"}, {id: 38, en: "average", ko: "평균"}, {id: 39, en: "elementary", ko: "기본적인"}, {id: 40, en: "circuit", ko: "회로"},
+            {id: 41, en: "consciousness", ko: "의식"}, {id: 42, en: "bring about", ko: "~을 가져오다, ~을 초래하다"}, {id: 43, en: "keep track of", ko: "~을 추적하다, ~을 기록하다"}, {id: 44, en: "a series of", ko: "일련의"},
+            {id: 45, en: "flash", ko: "빠르게 보여 주다"}, {id: 46, en: "invisible", ko: "보이지 않는, 눈에 띄지 않는"}, {id: 47, en: "randomly", ko: "무작위로"}, {id: 48, en: "chance", ko: "우연"},
+            {id: 49, en: "evidence", ko: "증거, 흔적"}, {id: 50, en: "approximate", ko: "대략적인"}, {id: 51, en: "overall", ko: "전체적인, 전반적인"}, {id: 52, en: "subjectively", ko: "주관적으로"},
+            {id: 53, en: "weight", ko: "가중치를 부여하다, 가중치"}, {id: 54, en: "grasp", ko: "이해, 파악하다"}, {id: 55, en: "estimation", ko: "추정"}, {id: 56, en: "conscious", ko: "의식적인"},
+            {id: 57, en: "sensory", ko: "감각의"}, {id: 58, en: "capacity", ko: "능력, 수용력"}, {id: 59, en: "anticipate", ko: "예상하다, 기대하다"}, {id: 60, en: "heighten", ko: "높이다"},
+            {id: 61, en: "be subjected to", ko: "~을 받다"}, {id: 62, en: "intellectual", ko: "지적인"}, {id: 63, en: "unfold", ko: "전개되다, 펼쳐지다"}, {id: 64, en: "informative", ko: "유익한, 유용한 정보를 주는"},
+            {id: 65, en: "contrast", ko: "대조"}, {id: 66, en: "discomfort", ko: "불편함"}, {id: 67, en: "tense", ko: "긴장한"}, {id: 68, en: "dread", ko: "두려워하다"},
+            {id: 69, en: "conception", ko: "개념, 구상"}, {id: 70, en: "discount", ko: "고려하지 않다, 무시하다"}, {id: 71, en: "idealization", ko: "이상화"}, {id: 72, en: "volume", ko: "부피, 양"},
+            {id: 73, en: "obtain", ko: "성립하다, 적용되다"}, {id: 74, en: "molecule", ko: "분자"}, {id: 75, en: "descriptive", ko: "기술적인"}, {id: 76, en: "phenomenon", ko: "현상"},
+            {id: 77, en: "constraint", ko: "제약, 제한"}, {id: 78, en: "removed", ko: "떨어진, 다른, 동떨어진"}, {id: 79, en: "accuracy", ko: "정확도"}, {id: 80, en: "intuitively", ko: "직관적으로"},
+            {id: 81, en: "overturn", ko: "뒤집히다, 뒤집다"}, {id: 82, en: "demand", ko: "수요"}, {id: 83, en: "artificial", ko: "인공의, 인위적인"}, {id: 84, en: "effectively", ko: "실질적으로, 사실상"},
+            {id: 85, en: "implant", ko: "이식하다"}, {id: 86, en: "give out", ko: "멈추다, 정지하다"}, {id: 87, en: "readily", ko: "쉽게"}, {id: 88, en: "prestige", ko: "명망, 위신"},
+            {id: 89, en: "status", ko: "지위"}, {id: 90, en: "observe", ko: "인식하다, 알다"}, {id: 91, en: "dominance", ko: "우세함"}, {id: 92, en: "aggressive", ko: "공격적인"},
+            {id: 93, en: "fearsome", ko: "무시무시한"}, {id: 94, en: "warrior", ko: "전사"}, {id: 95, en: "universally", ko: "어디에서나, 보편적으로"}, {id: 96, en: "expert", ko: "전문가"},
+            {id: 97, en: "transmission", ko: "전파"}, {id: 98, en: "afford", ko: "제공하다"}, {id: 99, en: "general opinion", ko: "여론"}, {id: 100, en: "reputation", ko: "명성, 평판"},
+            {id: 101, en: "rub off on ~", ko: "~로 옮겨오다, ~에게 영향을 주다"}, {id: 102, en: "gratification", ko: "만족감"}, {id: 103, en: "inherit", ko: "상속받다, 물려받다"}, {id: 104, en: "surround", ko: "둘러싸다"},
+            {id: 105, en: "drastic", ko: "급진적인"}, {id: 106, en: "follow suit", ko: "따라 하다"}, {id: 107, en: "dairy", ko: "유제품의"}, {id: 108, en: "intake", ko: "섭취"},
+            {id: 109, en: "grain", ko: "곡물"}, {id: 110, en: "loose", ko: "포장되지 않은"}, {id: 111, en: "count", ko: "중요하다, 간주하다, 포함하다"}, {id: 112, en: "venture", ko: "모험"},
+            {id: 113, en: "legislation", ko: "법률, 입법"}, {id: 114, en: "regulate", ko: "규제하다"}, {id: 115, en: "cruelty", ko: "잔혹 행위"}, {id: 116, en: "adequate", ko: "적절한"},
+            {id: 117, en: "promotion", ko: "증진"}, {id: 118, en: "insufficient", ko: "충분하지 못한"}, {id: 119, en: "go far enough", ko: "충분하다"}, {id: 120, en: "excess", ko: "초과, 과잉"},
+            {id: 121, en: "inhumanely", ko: "비인도적으로"}, {id: 122, en: "conserve", ko: "보호하다"}, {id: 123, en: "threatened", ko: "멸종 위기에 처한"}, {id: 124, en: "supplier", ko: "공급국, 공급자"},
+            {id: 125, en: "hardware", ko: "장비"}, {id: 126, en: "backfire", ko: "역효과를 낳다"}, {id: 127, en: "generate", ko: "만들어 내다, 생성하다"}, {id: 128, en: "shipment", ko: "수송"},
+            {id: 129, en: "invasion", ko: "침공"}, {id: 130, en: "fall into the hands of", ko: "~의 손에 들어가다"}, {id: 131, en: "oppose", ko: "반대하다"}, {id: 132, en: "equipment", ko: "장비"},
+            {id: 133, en: "export", ko: "수출하다"}, {id: 134, en: "depict", ko: "묘사하다"}, {id: 135, en: "stereotyped", ko: "정형화된"}, {id: 136, en: "elaborate", ko: "정교한, 복잡한"},
+            {id: 137, en: "conduct", ko: "행동, 행위, 수행하다"}, {id: 138, en: "flexibility", ko: "유연성"}, {id: 139, en: "spatial", ko: "공간의"}, {id: 140, en: "timely", ko: "시기적절하게"},
+            {id: 141, en: "exclusive", ko: "전용의, 독점적인"}, {id: 142, en: "fundamental", ko: "매우 중요한, 근본적인"}, {id: 143, en: "representation", ko: "표상, 개념, 작용"}, {id: 144, en: "term", ko: "일컫다"},
+            {id: 145, en: "critically", ko: "결정적으로"}, {id: 146, en: "counterpart", ko: "상응하는 존재, 대응물"}, {id: 147, en: "verbally", ko: "언어로, 구두로"}, {id: 148, en: "minority", ko: "소수 집단"},
+            {id: 149, en: "maintain", ko: "유지하다, 주장하다"}, {id: 150, en: "consistently", ko: "일관되게, 지속적으로"}, {id: 151, en: "persuasive", ko: "설득력 있는"}, {id: 152, en: "geographically", ko: "지리적으로"},
+            {id: 153, en: "advocate", ko: "주창자, 옹호자"}, {id: 154, en: "alternative", ko: "대안"}, {id: 155, en: "mainstream", ko: "주류"}, {id: 156, en: "escalate", ko: "확대되다"},
+            {id: 157, en: "induce", ko: "유도하다"}, {id: 158, en: "assert", ko: "주장하다"}, {id: 159, en: "atypical", ko: "비전형적인"}, {id: 160, en: "essentialism", ko: "본질주의"},
+            {id: 161, en: "property", ko: "속성, 특성, 재산"}, {id: 162, en: "identify", ko: "식별하다"}, {id: 163, en: "fulfill", ko: "달성하다, 충족시키다"}, {id: 164, en: "functional", ko: "기능적인"},
+            {id: 165, en: "classification", ko: "분류"}, {id: 166, en: "defining", ko: "본질적인 의미를 규정하는"}, {id: 167, en: "challenge", ko: "이의를 제기하다, 도전하다"}, {id: 168, en: "notion", ko: "생각, 개념"},
+            {id: 169, en: "correspondingly", ko: "그에 상응하여"}, {id: 170, en: "standard", ko: "표준, 기준"}, {id: 171, en: "conform to", ko: "~을 준수하다"}, {id: 172, en: "outperform", ko: "더 뛰어나다, 능가하다"},
+            {id: 173, en: "bullying", ko: "괴롭힘"}, {id: 174, en: "sympathy", ko: "동정심"}, {id: 175, en: "rationale", ko: "설명, 이유, 근거"}, {id: 176, en: "predominantly", ko: "대부분, 대개"},
+            {id: 177, en: "informal", ko: "비공식적인"}, {id: 178, en: "constitute", ko: "구성하다"}, {id: 179, en: "discipline", ko: "규율"}, {id: 180, en: "integrated", ko: "통합적인, 통합된"},
+            {id: 181, en: "reasonably", ko: "상당히, 꽤"}, {id: 182, en: "resourced", ko: "자원을 갖춘"}, {id: 183, en: "address", ko: "다루다, 해결하다"}, {id: 184, en: "supremacy", ko: "우월주의"},
+            {id: 185, en: "embed", ko: "내포하다"}, {id: 186, en: "taken-for-granted", ko: "당연시되는"}, {id: 187, en: "assumption", ko: "전제, 가정"}, {id: 188, en: "contribute to", ko: "~의 한 원인이 되다"},
+            {id: 189, en: "frame", ko: "표현하다"}, {id: 190, en: "inclusive", ko: "포함하는, 포괄적인"}, {id: 191, en: "flourish", ko: "번성하다"}, {id: 192, en: "accomplish", ko: "성취하다"},
+            {id: 193, en: "specialize", ko: "전문화하다"}, {id: 194, en: "designation", ko: "직무, 명칭"}, {id: 195, en: "dwelling", ko: "주거지, 주택"}, {id: 196, en: "distinct", ko: "고유한, 뚜렷이 다른"},
+            {id: 197, en: "practitioner", ko: "종사자, 실무자"}, {id: 198, en: "institution", ko: "제도"}, {id: 199, en: "of sorts", ko: "일종의, 보잘것없는"}, {id: 200, en: "civilization", ko: "문명"},
+            {id: 201, en: "differentiated", ko: "분화된, 차별화된"}, {id: 202, en: "sophisticated", ko: "정교한, 복잡한"}, {id: 203, en: "communal", ko: "공동체적인"}, {id: 204, en: "formalize", ko: "형식을 갖추게 하다, 공식화하다"},
+            {id: 205, en: "association", ko: "조합, 협회, 단체"}, {id: 206, en: "college", ko: "조합, 대학, 전문학교"}, {id: 207, en: "merchant", ko: "상인, 상선의"}, {id: 208, en: "take hold", ko: "자리 잡다, 뿌리내리다"},
+            {id: 209, en: "construction", ko: "건설"}, {id: 210, en: "occupational", ko: "직업의"}, {id: 211, en: "colonial", ko: "식민지의"}, {id: 212, en: "regime", ko: "체제"},
+            {id: 213, en: "inequality", ko: "불평등"}, {id: 214, en: "depress", ko: "하락시키다, 떨어뜨리다, 억제하다"}, {id: 215, en: "payment", ko: "급여"}, {id: 216, en: "comparatively", ko: "비교적"},
+            {id: 217, en: "profitable", ko: "수익성 있는"}, {id: 218, en: "fortune", ko: "부, 재산, 운"}, {id: 219, en: "commerce", ko: "상업"}, {id: 220, en: "finance", ko: "금융"},
+            {id: 221, en: "enslaved", ko: "노예가 된, 노예화된"}, {id: 222, en: "compensate for", ko: "~에 대해 보상하다"}, {id: 223, en: "diplomatic", ko: "외교적인"}, {id: 224, en: "debt", ko: "빚, 부채"},
+            {id: 225, en: "shape", ko: "형성하다"}, {id: 226, en: "benefit from", ko: "~로부터 이익을 얻다"}, {id: 227, en: "enormous", ko: "엄청난"}, {id: 228, en: "neural network", ko: "신경망"},
+            {id: 229, en: "massive", ko: "막대한, 거대한"}, {id: 230, en: "fundamentally", ko: "근본적으로"}, {id: 231, en: "string", ko: "연속"}, {id: 232, en: "decode", ko: "해석하다"},
+            {id: 233, en: "contain", ko: "포함하다"}, {id: 234, en: "adjust", ko: "조정되다"}, {id: 235, en: "be involved in", ko: "~에 포함되어 있다"}, {id: 236, en: "copyright", ko: "저작권"},
+            {id: 237, en: "organic chemistry", ko: "유기 화학"}, {id: 238, en: "organic compound", ko: "유기 화합물"}, {id: 239, en: "construct", ko: "구성하다"}, {id: 240, en: "principle", ko: "원리"},
+            {id: 241, en: "bonding", ko: "결합"}, {id: 242, en: "reactivity", ko: "반응성"}, {id: 243, en: "longevity", ko: "수명, 장수"}, {id: 244, en: "accordingly", ko: "따라서, 그러므로"},
+            {id: 245, en: "profession", ko: "직업"}, {id: 246, en: "be comprised of", ko: "~로 구성되어 있다"}, {id: 247, en: "odor", ko: "냄새"}, {id: 248, en: "pesticide", ko: "살충제"},
+            {id: 249, en: "scarce", ko: "희소한"}, {id: 250, en: "inadequate", ko: "불충분한, 부족한"}, {id: 251, en: "patent", ko: "특허를 획득하다"}, {id: 252, en: "excludable", ko: "배제성이 있는, 배제적인"},
+            {id: 253, en: "substitution", ko: "대체, 대체물"}, {id: 254, en: "coal", ko: "석탄"}, {id: 255, en: "exert", ko: "발휘하다"}, {id: 256, en: "persist", ko: "끈질기게 계속하다, 지속되다"},
+            {id: 257, en: "account for", ko: "~을 설명하다"}, {id: 258, en: "regulatory", ko: "조절하는"}, {id: 259, en: "inevitable", ko: "불가피한"}, {id: 260, en: "temptation", ko: "유혹"},
+            {id: 261, en: "nature", ko: "특성, 성질"}, {id: 262, en: "demanding", ko: "힘든, 부담이 큰"}, {id: 263, en: "inhibit", ko: "방해하다, 억제하다"}, {id: 264, en: "disprove", ko: "오류를 입증하다"},
+            {id: 265, en: "proposition", ko: "명제"}, {id: 266, en: "prosperity", ko: "번영, 호황"}, {id: 267, en: "considerable", ko: "상당한, 많은"}, {id: 268, en: "constant", ko: "일정한, 변함없는"},
+            {id: 269, en: "sustained", ko: "지속적인"}, {id: 270, en: "substantial", ko: "상당한"}, {id: 271, en: "contradict", ko: "반박하다"}, {id: 272, en: "investigator", ko: "연구자"},
+            {id: 273, en: "duty", ko: "세금, 의무"}, {id: 274, en: "in effect", ko: "시행 중인"}, {id: 275, en: "strike", ko: "파업"}, {id: 276, en: "establishment", ko: "설립, 정착, 확립"},
+            {id: 277, en: "doubtless", ko: "필시, 반드시"}, {id: 278, en: "state", ko: "상태"}, {id: 279, en: "separate out", ko: "~을 분리하다"}, {id: 280, en: "sensitive", ko: "민감한"},
+            {id: 281, en: "vulnerable", ko: "취약한"}, {id: 282, en: "fluctuation", ko: "변동"}, {id: 283, en: "downturn", ko: "침체"}, {id: 284, en: "outbreak", ko: "발생"},
+            {id: 285, en: "revenue", ko: "수익, 수입"}, {id: 286, en: "fragility", ko: "취약성"}, {id: 287, en: "pronounced", ko: "두드러진"}, {id: 288, en: "trade union", ko: "노동조합"},
+            {id: 289, en: "cyclical", ko: "순환적인"}, {id: 290, en: "responsiveness", ko: "대응 능력"}, {id: 291, en: "initiative", ko: "진취적 계획"}, {id: 292, en: "implement", ko: "시행하다"},
+            {id: 293, en: "extensive", ko: "광범위한"}, {id: 294, en: "alternate", ko: "번갈아 하다"}, {id: 295, en: "asset", ko: "자산"}, {id: 296, en: "expendable", ko: "쉽게 희생될 수 있는, 소모성의"},
+            {id: 297, en: "deplete", ko: "고갈시키다"}, {id: 298, en: "absorb", ko: "흡수하다"}, {id: 299, en: "pollutant", ko: "오염 물질"}, {id: 300, en: "incidence", ko: "발생, 발생률"},
+            {id: 301, en: "toxic", ko: "유독성의"}, {id: 302, en: "undesirable", ko: "바람직하지 않은"}, {id: 303, en: "draft", ko: "~의 기초를 만들다, 설계하다"}, {id: 304, en: "essential", ko: "본질적인"},
+            {id: 305, en: "element", ko: "요소"}, {id: 306, en: "commonality", ko: "공통점"}, {id: 307, en: "acquire", ko: "얻다, 습득하다"}, {id: 308, en: "context", ko: "상황"},
+            {id: 309, en: "at hand", ko: "당면한"}, {id: 310, en: "attributable", ko: "기인하는"}, {id: 311, en: "recall", ko: "기억해 내다"}, {id: 312, en: "resolution", ko: "해상도"},
+            {id: 313, en: "recollection", ko: "기억, 회상"}, {id: 314, en: "strikingly", ko: "놀랍도록, 현저하게"}, {id: 315, en: "vivid", ko: "생생한"}, {id: 316, en: "imperfect", ko: "불완전한"},
+            {id: 317, en: "degraded", ko: "훼손된, 퇴화한"}, {id: 318, en: "dim", ko: "희미한, 흐릿한"}, {id: 319, en: "fiction", ko: "허구"}, {id: 320, en: "distortion", ko: "왜곡"}
+        ];
+
+        let mainMode = 'quiz';
+        
+        // vocabData의 마지막 요소를 찾아 id값을 가져옴
+        const lastVocabId = vocabData[vocabData.length - 1].id;
+
+        const appState = {
+            quiz: { remaining: [], history: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'seq', startId: 1, endId: lastVocabId },
+            memorize: { remaining: [], history: [], correct: 0, wrong: 0, currentWord: null, typeMode: 'mixed', seqMode: 'seq', startId: 1, endId: lastVocabId }
+        };
+
+        let quizIncorrectWords = [];
+        let memoIncorrectWords = [];
+        let hasSeenAnswer = false;
+        let confirmCallback = null;
+
+        function getState() { return appState[mainMode]; }
+
+        window.onload = () => {
+            // max 속성을 데이터의 마지막 id로 자동 설정
+            document.getElementById('range-start').max = lastVocabId;
+            document.getElementById('range-end').max = lastVocabId;
+            
+            const state = getState();
+            document.getElementById('range-start').value = state.startId;
+            document.getElementById('range-end').value = state.endId;
+            
+            renderTable('word-list-body', vocabData, false);
+            applyDynamicTexts();
+            initPool('quiz');
+            initPool('memorize');
+            fetchWord();
+
+            /* 태블릿 기기 접속 감지 및 세로모드 권장 팝업 표시 */
+            const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);
+            const isTablet = window.innerWidth >= 600 && window.innerWidth <= 1366; 
+
+            if (isTouchDevice && isTablet) {
+                setTimeout(() => {
+                    showNotification("📱 태블릿은 세로 모드 사용을 권장합니다.");
+                }, 800);
+            }
+        };
+
+        function setMainMode(mode) {
+            if (mainMode === mode) return;
+
+            mainMode = mode;
+            document.getElementById('main-quiz-btn').classList.toggle('active', mode === 'quiz');
+            document.getElementById('main-memo-btn').classList.toggle('active', mode === 'memorize');
+
+            const isQuiz = mode === 'quiz';
+            document.getElementById('col-correct').style.display = isQuiz ? 'block' : 'none';
+            document.getElementById('col-wrong').style.display = isQuiz ? 'block' : 'none';
+            
+            const statusBox = document.getElementById('status-box');
+            if(isQuiz) statusBox.classList.remove('memo-mode');
+            else statusBox.classList.add('memo-mode');
+            
+            const state = getState();
+            document.getElementById('range-start').value = state.startId;
+            document.getElementById('range-end').value = state.endId;
+
+            applyDynamicTexts();
+            updateScoreboard();
+
+            if (state.currentWord) {
+                displayQuestionUI(state.currentWord);
+            } else {
+                initPool(mainMode);
+                fetchWord();
+            }
+        }
+
+        function setSeqMode(mode) {
+            const state = getState();
+            if (state.seqMode === mode) return;
+            
+            showConfirm("출제 순서 방식을 변경하면 현재 진행도가 초기화됩니다.\n계속하시겠습니까?", () => {
+                state.seqMode = mode;
+                state.correct = 0;
+                state.wrong = 0;
+                state.currentWord = null;
+                state.history = []; 
+                
+                initPool(mainMode);
+                fetchWord();
+                showNotification(mode === 'seq' ? "순서대로 표시됩니다." : "무작위 순서로 표시됩니다.");
+            });
+        }
+
+        function applyDynamicTexts() {
+            if (mainMode === 'quiz') {
+                document.getElementById('btn-mixed-text').innerText = '섞어서 맞추기';
+                document.getElementById('btn-ko-text').innerText = '한국어 맞추기';
+                document.getElementById('btn-en-text').innerText = '영어 맞추기';
+                document.getElementById('btn-retest-text').innerText = '오답 다시 풀기';
+                document.getElementById('note-btn-text').innerText = '오답 노트 보기';
+                document.getElementById('range-label-text').innerText = '📌 출제 범위 설정';
+                document.getElementById('note-modal-title').innerText = '오답 노트';
+                document.getElementById('note-modal-desc').innerText = '현재 누적된 오답입니다. 복습 모드에서 맞추거나 \'x\'를 눌러 지울 수 있습니다.';
+            } else {
+                document.getElementById('btn-mixed-text').innerText = '섞어서 암기';
+                document.getElementById('btn-ko-text').innerText = '한국어 암기';
+                document.getElementById('btn-en-text').innerText = '영어 암기';
+                document.getElementById('btn-retest-text').innerText = '못외운 단어 다시 보기';
+                document.getElementById('note-btn-text').innerText = '못외운 단어 노트 보기';
+                document.getElementById('range-label-text').innerText = '📌 암기 범위 설정';
+                document.getElementById('note-modal-title').innerText = '못외운 단어 노트';
+                document.getElementById('note-modal-desc').innerText = '누적된 못외운 단어입니다. 복습 모드에서 완료하거나 \'x\'를 눌러 지울 수 있습니다.';
+            }
+        }
+
+        function showMemoMeaning() {
+            const state = getState();
+            const reveal = document.getElementById('answer-reveal');
+            reveal.innerText = `뜻: ${state.currentWord.answer}`;
+            reveal.classList.add('show');
+            
+            document.getElementById('memo-state-1').style.display = 'none';
+            document.getElementById('memo-state-2').style.display = 'flex';
+            
+            if(state.typeMode === 'retest') {
+                document.getElementById('memo-add-btn').innerText = '여전히 못 외움 (유지)';
+            } else {
+                document.getElementById('memo-add-btn').innerText = '노트에 적어놓기';
+            }
+        }
+
+        function hideMemoMeaning() {
+            const reveal = document.getElementById('answer-reveal');
+            reveal.classList.remove('show');
+            setTimeout(() => { reveal.innerText = ''; }, 300);
+            
+            document.getElementById('memo-state-1').style.display = 'block';
+            document.getElementById('memo-state-2').style.display = 'none';
+        }
+
+        function addToMemoNote() {
+            const state = getState();
+            if (!memoIncorrectWords.find(w => w.id === state.currentWord.id)) {
+                memoIncorrectWords.push({id: state.currentWord.id, en: state.currentWord.en, ko: state.currentWord.ko});
+                showNotification("노트에 추가되었습니다.", "success");
+                updateScoreboard();
+            } else {
+                showNotification("이미 노트에 있는 단어입니다.", "error");
+            }
+        }
+
+        function nextMemoWord() {
+            const state = getState();
+            state.history.push({ word: state.currentWord, result: 'memo' }); 
+
+            if (state.typeMode === 'retest') {
+                memoIncorrectWords = memoIncorrectWords.filter(w => w.id !== state.currentWord.id);
+                showNotification("암기 완료! 노트에서 지워졌습니다.", "success");
+            }
+            state.correct++; 
+            updateScoreboard();
+            fetchWord();
+        }
+
+        document.getElementById('user-answer').addEventListener('focus', function() {
+            setTimeout(() => { this.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300);
+        });
+
+        function showConfirm(message, callback) {
+            document.getElementById('confirm-msg').innerText = message;
+            document.getElementById('custom-confirm').style.display = 'flex';
+            confirmCallback = callback;
+        }
+        function closeConfirm(isConfirmed) {
+            document.getElementById('custom-confirm').style.display = 'none';
+            if (isConfirmed && confirmCallback) confirmCallback();
+            confirmCallback = null;
+        }
+
+        function showNotification(message, type = 'success') {
+            const toast = document.getElementById('ui-toast');
+            toast.innerHTML = message;
+            toast.className = `toast-container show ${type === 'success' ? 'toast-success' : 'toast-error'}`;
+            setTimeout(() => { toast.classList.remove('show'); }, 2000);
+        }
+
+        function applyRange() {
+            const startInput = parseInt(document.getElementById('range-start').value);
+            const endInput = parseInt(document.getElementById('range-end').value);
+
+            if (isNaN(startInput) || isNaN(endInput) || startInput < 1 || endInput > lastVocabId || startInput > endInput) {
+                showNotification(`올바른 범위를 입력해주세요. (1 ~ ${lastVocabId})`, "error"); return;
+            }
+            showConfirm(`현재 모드의 범위를 ${startInput}번부터 ${endInput}번까지로 설정하고\n진행도를 초기화하시겠습니까?\n(※ 노트 기록은 유지됩니다)`, () => {
+                const state = getState();
+                state.startId = startInput;
+                state.endId = endInput;
+                
+                state.correct = 0; 
+                state.wrong = 0; 
+                state.currentWord = null;
+                state.history = []; 
+                
+                if (state.typeMode === 'retest') {
+                    document.getElementById('btn-mixed').click();
+                } else {
+                    initPool(mainMode); fetchWord();
+                }
+                showNotification(`범위가 ${startInput}번 ~ ${endInput}번으로 설정되었습니다.`);
+            });
+        }
+
+        function initPool(targetMode = mainMode) {
+            const state = appState[targetMode];
+            const currentNoteList = targetMode === 'quiz' ? quizIncorrectWords : memoIncorrectWords;
+            
+            if (state.typeMode === 'retest') {
+                state.remaining = [...currentNoteList];
+            } else {
+                state.remaining = vocabData.filter(w => w.id >= state.startId && w.id <= state.endId);
+            }
+
+            if (state.seqMode === 'seq') {
+                state.remaining.sort((a, b) => a.id - b.id);
+            }
+
+            if (targetMode === mainMode) updateScoreboard();
+        }
+
+        function updateScoreboard() {
+            const state = getState();
+            document.getElementById('solved-count').innerText = state.correct + state.wrong;
+            document.getElementById('correct-count').innerText = state.correct;
+            document.getElementById('wrong-count').innerText = state.wrong;
+            
+            const currentNoteList = mainMode === 'quiz' ? quizIncorrectWords : memoIncorrectWords;
+            const badge = document.getElementById('retest-badge');
+            badge.innerText = currentNoteList.length;
+            badge.style.background = currentNoteList.length > 0 ? 'var(--danger)' : 'var(--text-light)';
+            
+            document.getElementById('remain-count').innerText = state.remaining.length;
+            if (state.typeMode === 'retest') {
+                document.getElementById('total-count').innerText = currentNoteList.length;
+            } else {
+                document.getElementById('total-count').innerText = (state.endId - state.startId + 1);
+            }
+
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-${state.typeMode}`).classList.add('active');
+
+            document.getElementById('seq-btn-seq').classList.toggle('active', state.seqMode === 'seq');
+            document.getElementById('seq-btn-rand').classList.toggle('active', state.seqMode === 'random');
+        }
+
+        function resetProgress() {
+            const state = getState();
+            if (state.correct + state.wrong === 0) {
+                showNotification("초기화할 진행도가 없습니다.", "error"); return;
+            }
+            showConfirm("현재 진행도를 초기화하시겠습니까?\n(※ 오답 및 못외운 단어 노트는 유지됩니다)", () => {
+                state.correct = 0; 
+                state.wrong = 0; 
+                state.currentWord = null;
+                state.history = []; 
+                initPool(mainMode);
+                fetchWord();
+                showNotification("진행도가 초기화되었습니다.");
+            });
+        }
+
+        function setMode(mode) {
+            const state = getState();
+            if (state.typeMode === mode) return;
+            const currentNoteList = mainMode === 'quiz' ? quizIncorrectWords : memoIncorrectWords;
+            if (mode === 'retest' && currentNoteList.length === 0) {
+                showNotification("현재 저장된 단어가 없습니다.\n일반 모드를 진행해주세요.", "error"); return;
+            }
+
+            showConfirm("학습 방식을 변경하면 현재 진행도가 초기화됩니다.\n계속하시겠습니까?", () => {
+                state.correct = 0;
+                state.wrong = 0;
+                state.currentWord = null;
+                state.typeMode = mode; 
+                state.history = []; 
+                initPool(mainMode); 
+                fetchWord();
+                showNotification("학습 방식이 변경되었습니다.");
+            });
+        }
+
+        function goBack() {
+            const state = getState();
+            if (state.history.length === 0) {
+                showNotification("이전 단어가 없습니다.", "error");
+                return;
+            }
+
+            if (state.currentWord) {
+                state.remaining.unshift(state.currentWord);
+            }
+
+            const prev = state.history.pop();
+
+            if (mainMode === 'quiz') {
+                if (prev.result === 'correct') {
+                    state.correct = Math.max(0, state.correct - 1);
+                    if (state.typeMode === 'retest' && !quizIncorrectWords.find(w => w.id === prev.word.id)) {
+                        quizIncorrectWords.push({id: prev.word.id, en: prev.word.en, ko: prev.word.ko});
+                    }
+                } else if (prev.result === 'wrong') {
+                    state.wrong = Math.max(0, state.wrong - 1);
+                }
+            } else {
+                state.correct = Math.max(0, state.correct - 1);
+                if (state.typeMode === 'retest' && !memoIncorrectWords.find(w => w.id === prev.word.id)) {
+                    memoIncorrectWords.push({id: prev.word.id, en: prev.word.en, ko: prev.word.ko});
+                }
+            }
+
+            updateScoreboard();
+            displayQuestionUI(prev.word); 
+
+            const msgDiv = document.getElementById('retry-msg');
+            if (mainMode === 'quiz') {
+                msgDiv.style.display = 'inline-block';
+                if (prev.result === 'correct') {
+                    msgDiv.innerText = "한 번 맞춘 문제입니다, 다시 도전해보세요!";
+                    msgDiv.className = "retry-msg correct";
+                } else {
+                    msgDiv.innerText = "한 번 틀렸던 문제입니다.";
+                    msgDiv.className = "retry-msg wrong";
+                }
+            }
+        }
+
+        function displayQuestionUI(data) {
+            const state = getState();
+            state.currentWord = data;
+            
+            document.getElementById('retry-msg').style.display = 'none';
+            document.getElementById('question-display').innerText = data.question;
+            hasSeenAnswer = false;
+            
+            const reveal = document.getElementById('answer-reveal');
+            reveal.innerText = ''; reveal.classList.remove('show');
+            document.getElementById('user-answer').value = '';
+
+            if (mainMode === 'quiz') {
+                document.getElementById('quiz-input-group').style.display = 'flex';
+                document.getElementById('hint-btn').style.display = 'block';
+                document.getElementById('btn-prev-quiz').style.display = 'inline-flex'; 
+                
+                document.getElementById('memo-action-group').style.display = 'none';
+                document.getElementById('btn-prev-memo').style.display = 'none';
+                
+                if(window.innerWidth > 768) document.getElementById('user-answer').focus();
+            } else {
+                document.getElementById('quiz-input-group').style.display = 'none';
+                document.getElementById('hint-btn').style.display = 'none';
+                document.getElementById('btn-prev-quiz').style.display = 'none'; 
+                
+                document.getElementById('memo-action-group').style.display = 'flex';
+                document.getElementById('memo-state-1').style.display = 'block';
+                document.getElementById('memo-state-2').style.display = 'none';
+                
+                document.getElementById('btn-prev-memo').style.display = 'inline-flex';
+            }
+        }
+
+        function fetchWord() {
+            const state = getState();
+            if (state.remaining.length === 0) {
+                state.currentWord = null; 
+                if (state.typeMode === 'retest') {
+                    showNotification("축하합니다! 다시 보기 목록을 모두 완료했습니다.", "success");
+                    setMode('mixed');
+                } else {
+                    showNotification("범위 내의 모든 단어를 확인했습니다!", "success");
+                    document.getElementById('retry-msg').style.display = 'none';
+                    document.getElementById('question-display').innerText = "학습 완료! 🎉";
+                    document.getElementById('answer-reveal').classList.remove('show');
+                    
+                    document.getElementById('quiz-input-group').style.display = 'none';
+                    document.getElementById('hint-btn').style.display = 'none';
+                    document.getElementById('btn-prev-quiz').style.display = 'none';
+                    
+                    document.getElementById('memo-action-group').style.display = 'none';
+                    document.getElementById('btn-prev-memo').style.display = 'none';
+                }
+                return;
+            }
+
+            let nextWord;
+            if (state.seqMode === 'seq') {
+                nextWord = state.remaining.shift();
+            } else {
+                const randomIndex = Math.floor(Math.random() * state.remaining.length);
+                nextWord = state.remaining.splice(randomIndex, 1)[0];
+            }
+            
+            updateScoreboard();
+
+            let isEnToKo;
+            if (state.typeMode === 'ko') isEnToKo = true;
+            else if (state.typeMode === 'en') isEnToKo = false;
+            else isEnToKo = Math.random() > 0.5;
+
+            let q, a;
+            if (isEnToKo) { q = nextWord.en; a = nextWord.ko; } else { q = nextWord.ko; a = nextWord.en; }
+            displayQuestionUI({ id: nextWord.id, en: nextWord.en, ko: nextWord.ko, question: q, answer: a });
+        }
+
+        function handleWrongAnswer(userInput) {
+            const state = getState();
+            state.history.push({ word: state.currentWord, result: 'wrong' }); 
+
+            state.wrong++;
+            if (!quizIncorrectWords.find(w => w.id === state.currentWord.id)) {
+                quizIncorrectWords.push({id: state.currentWord.id, en: state.currentWord.en, ko: state.currentWord.ko});
+            }
+            updateScoreboard();
+            if (userInput !== null) showNotification(`❌ 오답입니다!<br>정답은 [ ${state.currentWord.answer} ] 입니다.`, "error");
+            else showNotification(`💡 정답은 [ ${state.currentWord.answer} ] 입니다.`, "error");
+            fetchWord();
+        }
+
+        function checkAnswer() {
+            if(mainMode !== 'quiz') return;
+            const state = getState();
+            const userInput = document.getElementById('user-answer').value.trim().toLowerCase();
+            if (userInput === "") return;
+            
+            const cleanCorrectAnswer = state.currentWord.answer.toLowerCase();
+            const acceptableAnswers = state.currentWord.answer.split(',').map(str => str.trim().toLowerCase());
+            const isCorrect = (userInput === cleanCorrectAnswer) || acceptableAnswers.includes(userInput);
+
+            if (isCorrect) {
+                state.history.push({ word: state.currentWord, result: 'correct' }); 
+
+                if (state.typeMode === 'retest') {
+                    quizIncorrectWords = quizIncorrectWords.filter(w => w.id !== state.currentWord.id);
+                    showNotification("✅ 완벽합니다! 오답 노트에서 제거되었습니다.", "success");
+                } else { 
+                    if (!hasSeenAnswer) state.correct++;
+                    showNotification("✅ 정답입니다!", "success"); 
+                }
+                updateScoreboard(); fetchWord();
+            } else { 
+                handleWrongAnswer(userInput); 
+            }
+        }
+
+        function handleKey(e) { if (e.key === 'Enter') checkAnswer(); }
+        function showAnswer() { if (hasSeenAnswer) return; hasSeenAnswer = true; handleWrongAnswer(null); }
+
+        function clearNoteList() {
+            const state = getState();
+            const list = mainMode === 'quiz' ? quizIncorrectWords : memoIncorrectWords;
+            if (list.length === 0) { showNotification("비울 노트가 없습니다.", "error"); return; }
+            showConfirm("노트의 모든 단어를 삭제하시겠습니까?", () => {
+                if (mainMode === 'quiz') quizIncorrectWords = []; else memoIncorrectWords = [];
+                updateScoreboard();
+                renderTable('note-list-body', [], true); 
+                if (state.typeMode === 'retest') {
+                    setMode('mixed');
+                    closeModal('note-modal'); 
+                }
+                showNotification("노트가 완전히 비워졌습니다.");
+            });
+        }
+
+        function removeWordFromNote(id) {
+            const state = getState();
+            showConfirm("이 단어를 노트에서 삭제하시겠습니까?", () => {
+                if (mainMode === 'quiz') {
+                    quizIncorrectWords = quizIncorrectWords.filter(w => w.id !== id);
+                    renderTable('note-list-body', quizIncorrectWords, true);
+                } else {
+                    memoIncorrectWords = memoIncorrectWords.filter(w => w.id !== id);
+                    renderTable('note-list-body', memoIncorrectWords, true);
+                }
+                updateScoreboard();
+                showNotification("해당 단어가 삭제되었습니다.");
+                
+                const list = mainMode === 'quiz' ? quizIncorrectWords : memoIncorrectWords;
+                if (state.typeMode === 'retest' && list.length === 0) {
+                    setMode('mixed');
+                    closeModal('note-modal'); 
+                }
+            });
+        }
+
+        function downloadNoteTxt() {
+            const list = mainMode === 'quiz' ? quizIncorrectWords : memoIncorrectWords;
+            if (list.length === 0) { showNotification("다운로드할 데이터가 없습니다.", "error"); return; }
+            
+            let content = "";
+            content += list.map(w => `(${w.id}) / ${w.en} / ${w.ko}`).join("\n");
+            
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = mainMode === 'quiz' ? '오답노트.txt' : '못외운단어.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function renderTable(tbodyId, data, isNoteList = false) {
+            const body = document.getElementById(tbodyId);
+            if (data.length === 0) {
+                body.innerHTML = `<tr><td colspan="${isNoteList ? 4 : 3}" style="text-align:center; padding: 30px; color:#999;">데이터가 없습니다.</td></tr>`; 
+                return;
+            }
+            body.innerHTML = data.map(w => `
+                <tr>
+                    <td>${w.id}</td>
+                    <td style="font-weight:600; color:#1a365d;">${w.en}</td>
+                    <td>${w.ko}</td>
+                    ${isNoteList ? `<td style="text-align:center;"><button class="item-delete-btn" onclick="removeWordFromNote(${w.id})" title="삭제"><i class="fa-solid fa-xmark"></i></button></td>` : ''}
+                </tr>
+            `).join('');
+        }
+
+        function filterWords() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = vocabData.filter(w => w.en.toLowerCase().includes(query) || w.ko.toLowerCase().includes(query));
+            renderTable('word-list-body', filtered, false);
+        }
+
+        /* 브라우저 뒤로가기 연동 제어 */
+        function openAllModal() { 
+            document.getElementById('all-modal').style.display = 'flex'; 
+            history.pushState({ modal: 'all-modal' }, '', '#all-modal');
+        }
+        
+        function openNoteModal() { 
+            const list = mainMode === 'quiz' ? quizIncorrectWords : memoIncorrectWords;
+            renderTable('note-list-body', list, true); 
+            document.getElementById('note-modal').style.display = 'flex'; 
+            history.pushState({ modal: 'note-modal' }, '', '#note-modal');
+        }
+        
+        function closeModal(id) { 
+            document.getElementById(id).style.display = 'none'; 
+            if (location.hash === '#' + id) {
+                history.back();
+            }
+        }
+
+        window.addEventListener('popstate', function() {
+            document.getElementById('all-modal').style.display = 'none';
+            document.getElementById('note-modal').style.display = 'none';
+        });
+
+    </script>
+</body>
+</html>
             display: none; align-items: center; gap: 8px; justify-content: center;
             background: #94a3b8; color: white; border: none; 
             padding: 10px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; 
