@@ -284,7 +284,7 @@
 
             <div class="action-buttons">
                 <button class="action-btn note-btn" onclick="openNoteModal()"><i class="fa-solid fa-book-open"></i> <span id="note-btn-text">오답 노트 보기</span></button>
-                <button class="action-btn" onclick="openAllModal()"><i class="fa-solid fa-list"></i> 전체 검색</button>
+                <button class="action-btn" onclick="openAllModal()"><i class="fa-solid fa-list"></i> 전체 단어 목록</button>
             </div>
 
             <div class="bottom-reset-box">
@@ -366,8 +366,8 @@
             {id: 37, en: "sum", ko: "합, 합계"}, {id: 38, en: "average", ko: "평균"}, {id: 39, en: "elementary", ko: "기본적인"}, {id: 40, en: "circuit", ko: "회로"},
             {id: 41, en: "consciousness", ko: "의식"}, {id: 42, en: "bring about", ko: "~을 가져오다, ~을 초래하다"}, {id: 43, en: "keep track of", ko: "~을 추적하다, ~을 기록하다"}, {id: 44, en: "a series of", ko: "일련의"},
             {id: 45, en: "flash", ko: "빠르게 보여 주다"}, {id: 46, en: "invisible", ko: "보이지 않는, 눈에 띄지 않는"}, {id: 47, en: "randomly", ko: "무작위로"}, {id: 48, en: "chance", ko: "우연"},
-            {id: 49, en: "evidence", ko: "증거, 흔적"}, {id: 50, en: "approximate", ko: "대략적인"}, {id: 51, en: "overall", ko: "전체적인, 전반적인"}, {id: 52, en: "subjectively", ko: "주관적으로"},
-            {id: 53, en: "weight", ko: "가중치를 부여하다, 가중치"}, {id: 54, en: "grasp", ko: "이해, 파악하다"}, {id: 55, en: "estimation", ko: "추정"}, {id: 56, en: "conscious", ko: "의식적인"},
+            {id: 49, en: "evidence", ko: "증거, 형적"}, {id: 50, en: "approximate", ko: "대략적인"}, {id: 51, en: "overall", ko: "전체적인, 전반적인"}, {id: 52, en: "subjectively", ko: "주관적으로"},
+            {id: 53, en: "weight", ko: "가중치를 부여하다, 가중치"}, {id: 54, en: "grasp", ko: "이해, 이해의 범위, 파악하다"}, {id: 55, en: "estimation", ko: "추정"}, {id: 56, en: "conscious", ko: "의식적인"},
             {id: 57, en: "sensory", ko: "감각의"}, {id: 58, en: "capacity", ko: "능력, 수용력"}, {id: 59, en: "anticipate", ko: "예상하다, 기대하다"}, {id: 60, en: "heighten", ko: "높이다"},
             {id: 61, en: "be subjected to", ko: "~을 받다"}, {id: 62, en: "intellectual", ko: "지적인"}, {id: 63, en: "unfold", ko: "전개되다, 펼쳐지다"}, {id: 64, en: "informative", ko: "유익한, 유용한 정보를 주는"},
             {id: 65, en: "contrast", ko: "대조"}, {id: 66, en: "discomfort", ko: "불편함"}, {id: 67, en: "tense", ko: "긴장한"}, {id: 68, en: "dread", ko: "두려워하다"},
@@ -383,7 +383,7 @@
             {id: 105, en: "drastic", ko: "급진적인"}, {id: 106, en: "follow suit", ko: "따라 하다"}, {id: 107, en: "dairy", ko: "유제품의"}, {id: 108, en: "intake", ko: "섭취"},
             {id: 109, en: "grain", ko: "곡물"}, {id: 110, en: "loose", ko: "포장되지 않은"}, {id: 111, en: "count", ko: "중요하다, 간주하다, 포함하다"}, {id: 112, en: "venture", ko: "모험"},
             {id: 113, en: "legislation", ko: "법률, 입법"}, {id: 114, en: "regulate", ko: "규제하다"}, {id: 115, en: "cruelty", ko: "잔혹 행위"}, {id: 116, en: "adequate", ko: "적절한"},
-            {id: 117, en: "promotion", ko: "증진"}, {id: 118, en: "insufficient", ko: "충분하지 못한"}, {id: 119, en: "go far enough", ko: "충분하다"}, {id: 120, en: "excess", ko: "초과, 과잉"},
+            {id: 117, en: "promotion", ko: "증진"}, {id: 118, en: "insufficient", ko: "충분하지 못한"}, {id: 119, en: "go far enough", ko: "충분하다"}, {id: 120, en: "excess", ko: "잔혹 행위, 지나친 행위"},
             {id: 121, en: "inhumanely", ko: "비인도적으로"}, {id: 122, en: "conserve", ko: "보호하다"}, {id: 123, en: "threatened", ko: "멸종 위기에 처한"}, {id: 124, en: "supplier", ko: "공급국, 공급자"},
             {id: 125, en: "hardware", ko: "장비"}, {id: 126, en: "backfire", ko: "역효과를 낳다"}, {id: 127, en: "generate", ko: "만들어 내다, 생성하다"}, {id: 128, en: "shipment", ko: "수송"},
             {id: 129, en: "invasion", ko: "침공"}, {id: 130, en: "fall into the hands of", ko: "~의 손에 들어가다"}, {id: 131, en: "oppose", ko: "반대하다"}, {id: 132, en: "equipment", ko: "장비"},
@@ -392,7 +392,7 @@
             {id: 141, en: "exclusive", ko: "전용의, 독점적인"}, {id: 142, en: "fundamental", ko: "매우 중요한, 근본적인"}, {id: 143, en: "representation", ko: "표상, 개념, 작용"}, {id: 144, en: "term", ko: "일컫다"},
             {id: 145, en: "critically", ko: "결정적으로"}, {id: 146, en: "counterpart", ko: "상응하는 존재, 대응물"}, {id: 147, en: "verbally", ko: "언어로, 구두로"}, {id: 148, en: "minority", ko: "소수 집단"},
             {id: 149, en: "maintain", ko: "유지하다, 주장하다"}, {id: 150, en: "consistently", ko: "일관되게, 지속적으로"}, {id: 151, en: "persuasive", ko: "설득력 있는"}, {id: 152, en: "geographically", ko: "지리적으로"},
-            {id: 153, en: "advocate", ko: "주창자, 옹호자"}, {id: 154, en: "alternative", ko: "대안"}, {id: 155, en: "mainstream", ko: "주류"}, {id: 156, en: "escalate", ko: "확대되다"},
+            {id: 153, en: "advocate", ko: "주창자, 옹호자"}, {id: 154, en: "alternative", ko: "대안"}, {id: 155, en: "mainstream", ko: "주류"}, {id: 156, en: "escalate", ko: "확대되다, 증가되다, 악화되다"},
             {id: 157, en: "induce", ko: "유도하다"}, {id: 158, en: "assert", ko: "주장하다"}, {id: 159, en: "atypical", ko: "비전형적인"}, {id: 160, en: "essentialism", ko: "본질주의"},
             {id: 161, en: "property", ko: "속성, 특성, 재산"}, {id: 162, en: "identify", ko: "식별하다"}, {id: 163, en: "fulfill", ko: "달성하다, 충족시키다"}, {id: 164, en: "functional", ko: "기능적인"},
             {id: 165, en: "classification", ko: "분류"}, {id: 166, en: "defining", ko: "본질적인 의미를 규정하는"}, {id: 167, en: "challenge", ko: "이의를 제기하다, 도전하다"}, {id: 168, en: "notion", ko: "생각, 개념"},
@@ -402,7 +402,7 @@
             {id: 181, en: "reasonably", ko: "상당히, 꽤"}, {id: 182, en: "resourced", ko: "자원을 갖춘"}, {id: 183, en: "address", ko: "다루다, 해결하다"}, {id: 184, en: "supremacy", ko: "우월주의"},
             {id: 185, en: "embed", ko: "내포하다"}, {id: 186, en: "taken-for-granted", ko: "당연시되는"}, {id: 187, en: "assumption", ko: "전제, 가정"}, {id: 188, en: "contribute to", ko: "~의 한 원인이 되다"},
             {id: 189, en: "frame", ko: "표현하다"}, {id: 190, en: "inclusive", ko: "포함하는, 포괄적인"}, {id: 191, en: "flourish", ko: "번성하다"}, {id: 192, en: "accomplish", ko: "성취하다"},
-            {id: 193, en: "specialize", ko: "전문화하다"}, {id: 194, en: "designation", ko: "직무, 명칭"}, {id: 195, en: "dwelling", ko: "주거지, 주택"}, {id: 196, en: "distinct", ko: "고유한, 뚜렷이 다른"},
+            {id: 193, en: "specialize", ko: "전문화하다"}, {id: 194, en: "designation", ko: "직무, 명칭"}, {id: 195, en: "dwelling", ko: "주거, 주거지, 주택"}, {id: 196, en: "distinct", ko: "고유한, 뚜렷이, 다른"},
             {id: 197, en: "practitioner", ko: "종사자, 실무자"}, {id: 198, en: "institution", ko: "제도"}, {id: 199, en: "of sorts", ko: "일종의, 보잘것없는"}, {id: 200, en: "civilization", ko: "문명"},
             {id: 201, en: "differentiated", ko: "분화된, 차별화된"}, {id: 202, en: "sophisticated", ko: "정교한, 복잡한"}, {id: 203, en: "communal", ko: "공동체적인"}, {id: 204, en: "formalize", ko: "형식을 갖추게 하다, 공식화하다"},
             {id: 205, en: "association", ko: "조합, 협회, 단체"}, {id: 206, en: "college", ko: "조합, 대학, 전문학교"}, {id: 207, en: "merchant", ko: "상인, 상선의"}, {id: 208, en: "take hold", ko: "자리 잡다, 뿌리내리다"},
